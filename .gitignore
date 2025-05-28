@@ -1,0 +1,12 @@
+.idea
+.venv
+system180-env
+*.egg-info
+*.db
+*.sqlite3
+
+data
+static/detected_images
+__pycache__/
+uploads
+demonstrator/roboflow_data/*

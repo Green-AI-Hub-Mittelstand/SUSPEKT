@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="upload-page-container">
+    <h1>Landing Page for Training</h1>
+
+    <form id="upload-form" method="post" enctype="multipart/form-data">
+        <div class="button-container">
+
+            <button type="button" id="train-model-btn" class="btn btn-success">
+                <i class="fas fa-cogs"></i>
+                Trainieren
+            </button>
+        </div>
+    </form>
+
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Bilder werden verarbeitet...</p>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    const fileInput = document.getElementById('file-input');
+    const detectObjectsBtn = document.getElementById('detect-objects-btn');
+    const uploadForm = document.getElementById('upload-form');
+    const loading = document.getElementById('loading');
+    const selectFilesBtn = document.getElementById('select-files-btn');
+    const openCameraBtn = document.getElementById('open-camera-btn');
+    const cameraModal = document.getElementById('camera-modal');
+    const closeModal = document.querySelector('.close-modal');
+    const video = document.getElementById('camera-stream');
+    const canvas = document.getElementById('camera-canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const switchCameraBtn = document.getElementById('switch-camera-btn');
+    const modalAnalyzeBtn = document.getElementById('modal-analyze-btn');
+    const imageCountDisplay = document.getElementById('image-count');
+
+    let currentStream = null;
+    let facingMode = 'environment'; // Start with back camera
+    function startTraining() {
+        // Show a loading indicator
+        loading.style.display = 'block';
+
+        // Send a POST request to the /train endpoint
+        fetch("/train", {
+            method: "POST", // Use POST method for training request
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide the loading spinner once the response is received
+            loading.style.display = 'none';
+
+            // Handle the response (show a message or update UI accordingly)
+            if (data.status === "Training complete!") {
+                alert("Training started successfully!");
+            }
+            else if(data.status ==="No new image detected, skipping training and update."){
+                alert("No new image detected, skipping training and update.");
+            }
+            else if(data.status ==="Only one new image detected, skipping training and update."){
+                alert("Only one new image detected, skipping training and update.")
+            }
+            else {
+                alert("Error starting training: " + data.message);
+            }
+        })
+        .catch(error => {
+            // Hide the loading spinner in case of error
+            loading.style.display = 'none';
+            alert("An error occurred: " + error);
+        });
+    }
+
+    const trainModelBtn = document.getElementById('train-model-btn');
+    trainModelBtn.addEventListener('click', startTraining);
+</script>
+
+{% endblock %}
