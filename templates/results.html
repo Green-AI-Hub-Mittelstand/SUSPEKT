@@ -1,0 +1,1244 @@
+{% extends "base.html" %}
+
+{% block title %}Erkennungsergebnisse{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hauptcontainer Styling */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+    }
+
+    /* Header Styling */
+    .results-header {
+        background: linear-gradient(135deg, #2196F3, #1565C0);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        text-align: center;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .results-header h1 {
+        font-size: 2.5rem;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .results-subheader {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    /* Ergebnis-Grid */
+    .results-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1.5rem 3rem;
+    }
+
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Bild-Container */
+    .image-container {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .image-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+
+    /* Dateiname */
+    .filename {
+        background: #f8f9fa;
+        color: #1976D2;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #eee;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .filename:before {
+        content: '\f15b';
+        font-family: 'Font Awesome 5 Free';
+        margin-right: 0.75rem;
+        color: #1976D2;
+    }
+
+    /* Erkanntes Bild */
+    .detected-image {
+        padding: 1rem;
+    }
+
+    .detected-image img {
+        width: 100%;
+        border-radius: 6px;
+        transition: transform 0.3s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .detected-image img:hover {
+        transform: scale(1.02);
+        cursor: zoom-in;
+    }
+
+    /* Klassen-Liste */
+    .classes-list-header {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #eee;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        color: #333;
+    }
+
+    .classes-list-header i {
+        margin-right: 0.5rem;
+        color: #2196F3;
+    }
+
+    .classes-list {
+        padding: 1rem 1.5rem 1.5rem;
+    }
+
+    /* Klassen-Karten */
+    .class-card {
+        margin-bottom: 0.5rem;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        border: 1px solid #e0e0e0;
+    }
+
+    .class-header {
+        background: linear-gradient(to right, #f5f7fa, #e8edf2);
+        padding: 0.6rem 0.8rem;
+        font-weight: 500;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        color: #444;
+        font-size: 0.95rem;
+    }
+
+    .class-header:hover {
+        background: linear-gradient(to right, #e8edf2, #d9e2ec);
+    }
+
+    .class-header:after {
+        content: '\f107';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        color: #666;
+        transition: transform 0.3s;
+        font-size: 0.9rem;
+    }
+
+    .class-header.active:after {
+        transform: rotate(180deg);
+    }
+
+    .class-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out, padding 0.3s ease;
+        background-color: white;
+        padding: 0 0.8rem;
+    }
+
+    .class-content.active {
+        max-height: 800px;
+        padding: 0.8rem;
+    }
+
+    /* Objekt-Eigenschaften */
+    .property-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .property-list li {
+        padding: 0.4rem;
+        border: 1px solid #f0f0f0;
+        border-radius: 4px;
+        background-color: #fafafa;
+        font-size: 0.9rem;
+    }
+
+    .property-list li:last-child {
+        grid-column: 1 / -1; /* Zustandselement nimmt ganze Breite ein */
+    }
+
+    .property-label {
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        color: #555;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Bild-Ausschnitt */
+    .crop-container {
+        background: #f8f9fa;
+        padding: 0.6rem;
+        border-radius: 6px;
+        margin-bottom: 0.8rem;
+        text-align: center;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .crop-image {
+        max-width: 120px;
+        height: auto;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        object-fit: cover;
+    }
+
+    .crop-image:hover {
+        transform: scale(1.05);
+        cursor: zoom-in;
+    }
+
+    /* Farb-Info */
+    .color-info {
+        padding: 0;
+        margin-top: 0.3rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .color-sample {
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
+        display: inline-block;
+        vertical-align: middle;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .color-name {
+        font-weight: 500;
+        display: inline-block;
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    .color-confidence {
+        display: inline-block;
+        padding: 0.1rem 0.3rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        background: #e3f2fd;
+        color: #1976D2;
+        font-weight: 500;
+    }
+
+    .color-details {
+        width: 100%;
+        margin-top: 0.3rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .color-details div {
+        background: white;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        border: 1px solid #e0e0e0;
+    }
+
+    /* Zustandsauswahl */
+    .condition-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.3rem;
+        align-items: center;
+    }
+
+    .condition-select {
+        padding: 0.4rem;
+        border-radius: 3px;
+        border: 1px solid #ccc;
+        background-color: white;
+        flex-grow: 1;
+        font-size: 0.85rem;
+        max-width: 140px;
+    }
+
+    .condition-button {
+        padding: 0.4rem 0.7rem;
+        background-color: #f44336;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+    }
+
+    .condition-button:hover {
+        background-color: #d32f2f;
+    }
+
+    .condition-button i {
+        font-size: 0.8rem;
+    }
+
+    /* Modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+    }
+
+    .modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90vh;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+        cursor: default;
+    }
+
+    .modal-content img {
+        display: block;
+        max-width: 100%;
+        max-height: 85vh;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.5rem;
+        color: white;
+        cursor: pointer;
+        z-index: 1010;
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .close-modal:hover {
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    /* Footer-Bereich */
+    .footer-actions {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .save-button {
+        padding: 0.8rem 1.5rem;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: background-color 0.2s, transform 0.1s;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .save-button:hover {
+        background-color: #388E3C;
+    }
+
+    .save-button:active {
+        transform: scale(0.98);
+    }
+
+    .back-button {
+        padding: 0.8rem 1.5rem;
+        background-color: #f5f5f5;
+        color: #333;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: background-color 0.2s, transform 0.1s;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .back-button:hover {
+        background-color: #e0e0e0;
+    }
+
+    .back-button:active {
+        transform: scale(0.98);
+    }
+
+    .back-button i, .save-button i {
+        font-size: 1.1rem;
+    }
+
+    /* Badge für Wahrscheinlichkeit */
+    .probability-badge {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        background-color: #e8f5e9;
+        color: #388E3C;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: 0.3rem;
+    }
+
+    /* Badges für Zustände */
+    .condition-badge {
+        display: inline-block;
+        padding: 0.15rem 0.3rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: 0.3rem;
+    }
+
+    .condition-good {
+        background-color: #e8f5e9;
+        color: #388E3C;
+    }
+
+    .condition-damaged {
+        background-color: #ffebee;
+        color: #d32f2f;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .footer-actions {
+            flex-direction: column;
+        }
+
+        .save-button, .back-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Neuer Button für KI-Detektion */
+.ki-button {
+    padding: 0.4rem 0.7rem;
+    background-color: #ffeb3b; /* Gelb */
+    color: #333;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+.ki-button:hover {
+    background-color: #fdd835;
+}
+
+/* KI Modal spezifische Stile */
+#ki-modal .modal-content {
+    max-width: 600px;
+    border-radius: 10px;
+    overflow-y: auto;
+}
+#ki-modal .modal-header {
+    background-color: #f5f7fa;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#ki-modal .modal-header h2 {
+    margin: 0;
+}
+#ki-modal .modal-body {
+    padding: 1rem;
+}
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <h1>Erkennungsergebnisse</h1>
+    <div class="results-subheader">System180-Komponenten erfolgreich analysiert</div>
+</div>
+
+<div id="warning-message" class="alert alert-info alert-dismissible fade show" role="alert">
+    <h4 class="alert-heading">Hinweis: KI am Werk!</h4>
+    Die folgenden Ergebnisse (Stückliste) basiert auf automatisierten KI-Analysen. Bitte beachten Sie, dass die Resultate vorläufig sind und trotz modernster Technik Fehler oder Unvollständigkeiten auftreten können.
+    Eine abschließende manuelle Prüfung der Daten ist daher notwendig.
+</div>
+
+
+
+
+<div class="results-container">
+    <div class="results-grid">
+        {% for filename in detected_images %}
+        <div class="image-container">
+            <div class="filename">{{ filename }}</div>
+
+            <div class="detected-image">
+                <img src="{{ url_for('static', path='detected_images/processed_images/' + filename) }}"
+                     alt="Erkanntes Bild mit Bounding Boxen"
+                     onclick="openModal(this.src)">
+            </div>
+
+            <div class="classes-list-header">
+                <i class="fas fa-tags"></i> Erkannte Objekte
+            </div>
+            <div class="classes-list">
+                {% if filename in image_results %}
+                    {% for obj in image_results[filename] %}
+                    <div class="class-card">
+                        <div class="class-header" onclick="toggleCard(this)">
+                            {% if obj.class == "Gerade" %}
+                                <span>{{ obj.class }} {{ obj.laenge | int }}</span>
+                            {% else %}
+                                <span>{{ obj.class }}</span>
+                            {% endif %}
+                            <span class="probability-badge">{{ "%.0f"|format(obj.confidence * 100) }}%</span>
+                        </div>
+                        <div class="class-content">
+                            <div class="crop-container">
+                                <img src="/static/{{ obj.crop_path }}" class="crop-image" alt="Objekt Ausschnitt" onclick="openModal('/static/{{ obj.crop_path }}')">
+                            </div>
+                            <ul class="property-list">
+                                <li>
+                                    <span class="property-label">Ansicht</span>
+                                    <div>{{ obj.ansicht }}</div>
+                                </li>
+                                <li>
+                                    <span class="property-label">Aufnahmetyp</span>
+                                    <div>{{ obj.capture_type }}</div>
+                                </li>
+                                <li>
+                                    <span class="property-label">Maße</span>
+                                    <div>{{ obj.maße }}</div>
+                                </li>
+                                <li>
+                                    <span class="property-label">Typ</span>
+                                    <div>{{ obj.typ }}</div>
+                                </li>
+                                <li>
+                                    <span class="property-label">Gewicht</span>
+                                    <div>{{ obj.gewicht }}</div>
+                                </li>
+                                <li>
+                                    <span class="property-label">Farbe</span>
+                                    {% if obj.farbe and obj.farbe.erkannte_farbe %}
+                                    <div class="color-info">
+                                        <span class="color-sample" style="background-color: {{ obj.farbe.hex_code }}"></span>
+                                        <span class="color-name">{{ obj.farbe.erkannte_farbe }}</span>
+                                        <span class="color-confidence">{{ "%.0f"|format(obj.farbe.confidence * 100) }}%</span>
+                                        <div class="color-details">
+                                            <div>HEX: {{ obj.farbe.hex_code }}</div>
+                                            <div>NCS: {{ obj.farbe.ncs_code }}</div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                        <div>Nicht verfügbar</div>
+                                    {% endif %}
+                                </li>
+                                <li>
+                                    <span class="property-label">Zustand</span>
+                                    <div>
+                                        {{ obj.zustand }}
+                                        {% if obj.zustand == "unbeschädigt" %}
+                                            <span class="condition-badge condition-good">Wiederverwendbar</span>
+                                        {% else %}
+                                            <span class="condition-badge condition-damaged">Beschädigt</span>
+                                        {% endif %}
+                                    </div>
+                                    <form class="condition-form" onsubmit="updateCondition(event, this)">
+                                        <input type="hidden" name="filename" value="{{ filename }}">
+                                        <input type="hidden" name="bbox_id" value="{{ obj.bbox_id }}">
+                                        <input type="hidden" name="reusable" id="reusable_{{ obj.bbox_id }}" value="{{ 'true' if obj.reusable else 'false' }}">
+
+                                        <select name="zustand" class="condition-select" onchange="handleConditionChange(this, '{{ obj.bbox_id }}')">
+                                            <option value="unbeschädigt" selected>Unbeschädigt</option>
+                                            <option value="MDF-Platzer">MDF-Platzer</option>
+                                            <option value="Rohr_Kratzer">Rohr-Kratzer</option>
+                                            <option value="Delle">Delle</option>
+                                        </select>
+
+                                        <button type="button" class="ki-button" onclick="openKIModal('{{ obj.class }}', '{{ obj.bbox_id }}', '{{ obj.crop_path }}', '{{ filename }}')">
+                                            KI-Detektion
+                                        </button>
+
+
+
+
+
+                                        <button type="submit" class="condition-button">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            Melden
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-objects">Keine Objekte erkannt</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer-actions">
+        <a href="/" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Neue Bilder auswählen
+        </a>
+
+        <form action="/review_results/" method="post" onsubmit="updateImageResults()">
+            <input type="hidden" id="image_results" name="image_results" value='{{ image_results | tojson | safe }}'>
+            <button type="submit" class="save-button">
+                <i class="fas fa-save"></i>
+                In Datenbank speichern
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="modal">
+    <span class="close-modal">&times;</span>
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="Vergrößertes Bild">
+    </div>
+</div>
+
+<!-- Neuer KI-Detektion Modal mit integriertem Upload-Layout -->
+<div id="ki-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Beschädigung Melden</h2>
+            <span class="close-ki-modal" style="cursor: pointer;">&times;</span>
+        </div>
+        <div class="modal-body">
+            <!-- Crop-Bereich und aktueller Zustand -->
+            <div class="image-display" style="text-align: center; margin-bottom: 20px;">
+                <h2>Ausgewähltes Teil: <span id="ki-part-type">[Teilname]</span></h2>
+                <h2>Zustand: <span id="ki-part-condition">Unknown</span></h2>
+
+                <img id="ki-image" src="" alt="Objekt Ausschnitt" class="crop-image"
+     style="max-width: 100%; max-height: 300px; border: 2px solid #ddd; border-radius: 8px; padding: 5px; background-color: #f8f9fa;">
+
+            </div>
+            <!-- Formular mit File-Input und Buttons -->
+            <input type="hidden" id="ki-part-type-hidden" value="">
+            <input type="hidden" id="ki-part-id-hidden" value="">
+            <form id="ki-upload-form" method="post" enctype="multipart/form-data">
+                <input type="file" name="files" accept="image/*" required style="display: none" id="ki-file-input">
+
+                <div class="button-container" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-primary" id="ki-select-files-btn">
+                        <i class="fas fa-upload"></i>
+                        Bild auswählen
+                    </button>
+                    <button type="button" class="btn btn-primary" id="ki-open-camera-btn">
+                        <i class="fas fa-camera"></i>
+                        Kamera öffnen
+                    </button>
+                    <button type="button" class="btn btn-primary" id="ki-capture-btn" style="display: none;">
+                        <i class="fas fa-camera-retro"></i>
+                        Foto aufnehmen
+                    </button>
+
+                    <button type="button" id="ki-detect-condition-btn" class="btn btn-secondary" disabled>
+                        <i class="fas fa-search"></i>
+                        Zustand Erkennen
+                    </button>
+                    <button type="button" id="ki-cancel-btn" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Abbrechen
+                    </button>
+                </div>
+                <input type="hidden" id="ki-filename" value="">
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+// Entferne den Warnhinweis nach 5 Sekunden
+setTimeout(function(){
+var message = document.getElementById('warning-message');
+if (message) {
+  message.style.display = 'none';
+}
+}, 10000); // 5000 Millisekunden = 5 Sekunden
+
+
+    // Klassen-Karten umschalten
+    function toggleCard(header) {
+        const content = header.nextElementSibling;
+
+        if (content) {
+            header.classList.toggle('active');
+
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                setTimeout(() => {
+                    content.style.padding = '0 1.2rem';
+                }, 300);
+            } else {
+                content.classList.add('active');
+                content.style.padding = '1.2rem';
+            }
+        }
+    }
+
+    // Alle Karten beim Laden initialisieren
+    document.addEventListener('DOMContentLoaded', function() {
+        // Erste Karte jedes Bildes automatisch öffnen
+        document.querySelectorAll('.image-container').forEach(container => {
+            const firstHeader = container.querySelector('.class-header');
+            if (firstHeader) {
+                toggleCard(firstHeader);
+            }
+        });
+    });
+
+    // Zustandsänderung behandeln
+    function handleConditionChange(selectElement, bboxId) {
+        let reusableInput = document.getElementById("reusable_" + bboxId);
+        const isDamaged = ["MDF-Platzer", "Rohr_Kratzer", "Delle"].includes(selectElement.value);
+        reusableInput.value = isDamaged ? "false" : "true";
+    }
+
+    // Zustand aktualisieren
+    function updateCondition(event, form) {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const dropdown = form.querySelector("select[name='zustand']");
+        const selectedCondition = dropdown.value;
+        const isDamaged = ["MDF-Platzer", "Rohr_Kratzer", "Delle"].includes(selectedCondition);
+
+        // Den versteckten reusable-Wert aktualisieren
+        let reusableInput = form.querySelector("input[name='reusable']");
+        reusableInput.value = isDamaged ? "false" : "true";
+        formData.set("reusable", reusableInput.value);
+
+        fetch("/update_condition/", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Zustandstext aktualisieren
+                const propertyItem = form.closest("li");
+                const statusDisplay = propertyItem.querySelector("div");
+                statusDisplay.innerHTML = selectedCondition;
+
+                // Badge hinzufügen/aktualisieren
+                if (isDamaged) {
+                    statusDisplay.innerHTML += ' <span class="condition-badge condition-damaged">Beschädigt</span>';
+                } else {
+                    statusDisplay.innerHTML += ' <span class="condition-badge condition-good">Wiederverwendbar</span>';
+                }
+
+                // Erfolgsmeldung
+                const notification = document.createElement('div');
+                notification.style.position = 'fixed';
+                notification.style.bottom = '20px';
+                notification.style.right = '20px';
+                notification.style.background = '#4CAF50';
+                notification.style.color = 'white';
+                notification.style.padding = '12px 20px';
+                notification.style.borderRadius = '4px';
+                notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                notification.style.zIndex = '1000';
+                notification.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 8px;"></i> Beschädigung erfolgreich gemeldet!';
+
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transition = 'opacity 0.5s';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 500);
+                }, 3000);
+            } else {
+                alert("Fehler beim Aktualisieren des Zustands.");
+            }
+        })
+        .catch(error => {
+            console.error("Fehler:", error);
+            alert("Ein Fehler ist aufgetreten bei der Kommunikation mit dem Server.");
+        });
+    }
+
+    // Bildergebnisse aktualisieren bevor gesendet wird
+    function updateImageResults() {
+        let imageResultsInput = document.getElementById("image_results");
+        let existingResults = JSON.parse(imageResultsInput.value || "{}");
+
+        document.querySelectorAll(".image-container").forEach(imageContainer => {
+            let filename = imageContainer.querySelector(".filename").textContent.trim();
+
+            if (!(filename in existingResults)) {
+                existingResults[filename] = [];
+            }
+
+            imageContainer.querySelectorAll(".class-card").forEach(card => {
+                let bboxId = card.querySelector("input[name='bbox_id']").value;
+                let dropdown = card.querySelector("select[name='zustand']");
+                let selectedCondition = dropdown.value;
+
+                // Bestehende Objekt finden und aktualisieren
+                let obj = existingResults[filename].find(item => item.bbox_id == bboxId);
+                if (obj) {
+                    obj.zustand = selectedCondition;
+                    obj.reusable = dropdown.value === "unbeschädigt";
+                }
+            });
+        });
+
+        imageResultsInput.value = JSON.stringify(existingResults);
+    }
+
+function openKIDetectionWindow(bboxId, ) {
+    // Hier kannst du bboxId nutzen, um z. B. ein passendes Bild zu laden.
+    // Beispiel: Setze als Platzhalter ein bereits vorhandenes Bild oder einen Standardwert.
+
+
+
+    const kiModal = document.getElementById('ki-modal');
+    const kiImage = document.getElementById('ki-image');
+    // Optional: kiImage.src = '/static/path/to/image_for_' + bboxId + '.jpg';
+    kiModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeKIModal() {
+    kiModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    kiFileInput.value = "";
+    kiStoredFile = null;
+    kiImage.src = "";
+    kiPartCondition.textContent = "Unknown";
+    if (kiCurrentStream) {
+        kiCurrentStream.getTracks().forEach(track => track.stop());
+        kiCurrentStream = null;
+    }
+    const kiVideo = document.getElementById('ki-camera-stream');
+    if (kiVideo) {
+        kiVideo.style.display = 'none';
+    }
+    // Button "Foto aufnehmen" wieder ausblenden
+    document.getElementById('ki-capture-btn').style.display = 'none';
+}
+
+
+// Event-Listener für KI Modal schließen und Bestätigen
+document.addEventListener('DOMContentLoaded', function() {
+    // Schließen bei Klick auf das "×" oder den "Abbrechen"-Button
+    document.querySelectorAll('.close-ki-modal, #ki-cancel-btn').forEach(btn => {
+        btn.addEventListener('click', closeKIModal);
+    });
+
+    // Beispiel für den Bestätigen-Button: Hier kannst du die KI-Erkennung verarbeiten
+    document.getElementById('ki-confirm-btn').addEventListener('click', function() {
+        // Hier wird der über KI ermittelte Zustand verarbeitet – passe das nach Bedarf an
+        alert('KI-Zustand wurde erkannt und bestätigt.');
+        closeKIModal();
+    });
+}
+);
+
+ // === KI-Pop-up Funktionalitäten inklusive Kameralogik ===
+
+// Elementreferenzen für den KI-Pop-up-Bereich
+const kiModal = document.getElementById('ki-modal');
+const kiSelectFilesBtn = document.getElementById('ki-select-files-btn');
+const kiOpenCameraBtn = document.getElementById('ki-open-camera-btn');
+const kiDetectConditionBtn = document.getElementById('ki-detect-condition-btn');
+const kiCancelBtn = document.getElementById('ki-cancel-btn');
+const kiFileInput = document.getElementById('ki-file-input');
+const kiUploadForm = document.getElementById('ki-upload-form');
+const kiImage = document.getElementById('ki-image');
+const kiPartCondition = document.getElementById('ki-part-condition');
+const kiPartType = document.getElementById('ki-part-type');
+const kiPartTypeHidden = document.getElementById('ki-part-type-hidden');
+const kiPartIdHidden = document.getElementById('ki-part-id-hidden');
+
+let kiStoredFile = null; // Speichert das aktuell ausgewählte Bild
+let kiCurrentStream = null; // Kamera-Stream für den KI-Bereich
+let kiFacingMode = 'environment'; // Standard: Rückkamera
+
+function openKIModal(partType, partId, cropImageSrc, filename) {
+    kiPartType.textContent = partType || "[Teilname]";
+    kiPartTypeHidden.value = partType || "";
+    kiPartIdHidden.value = partId || "";
+    document.getElementById('ki-filename').value = filename || "";
+
+    // Korrigiere den Bildpfad, falls nötig:
+    let correctedSrc = cropImageSrc || "";
+
+    // Falls der Pfad noch nicht mit "/static/" beginnt, hinzufügen
+    if (correctedSrc && !correctedSrc.startsWith("/static/")) {
+        correctedSrc = "/static/" + correctedSrc;
+    }
+
+    // Füge fehlende Schrägstriche ein:
+    // Ersetze "detected_imagescrops" durch "detected_images/crops"
+    correctedSrc = correctedSrc.replace("detected_imagescrops", "detected_images/crops");
+    // Ersetze "cropsFront" durch "crops/Front" – falls nötig
+    correctedSrc = correctedSrc.replace("cropsFront", "crops/Front/");
+
+    // Setze den korrigierten Pfad als src des Bildes im Pop-up
+    kiImage.src = correctedSrc;
+
+    kiPartCondition.textContent = "Unknown";
+    kiDetectConditionBtn.disabled = true; // Zustandserkennung erst aktivieren, wenn ein Bild vorliegt
+    kiModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+
+// Funktion zum Schließen des KI-Pop-ups und Zurücksetzen der Werte
+function closeKIModal() {
+    kiModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    kiFileInput.value = "";
+    kiStoredFile = null;
+    kiImage.src = "";
+    kiPartCondition.textContent = "Unknown";
+    if (kiCurrentStream) {
+        kiCurrentStream.getTracks().forEach(track => track.stop());
+        kiCurrentStream = null;
+    }
+    const kiVideo = document.getElementById('ki-camera-stream');
+    if (kiVideo) {
+        kiVideo.style.display = 'none';
+    }
+    // Button "Foto aufnehmen" wieder ausblenden
+    document.getElementById('ki-capture-btn').style.display = 'none';
+}
+
+
+// File-Input: Beim Klick auf "Bild auswählen" den versteckten Input öffnen
+kiSelectFilesBtn.addEventListener('click', () => {
+    kiFileInput.click();
+});
+
+// Beim Auswählen eines Bildes: Vorschau aktualisieren und "Zustand Erkennen" aktivieren
+kiFileInput.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        kiStoredFile = this.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            kiImage.src = e.target.result;
+            kiImage.style.display = 'block';
+        };
+        reader.readAsDataURL(kiStoredFile);
+        kiDetectConditionBtn.disabled = false;
+    }
+});
+
+// === KI-Kamera-Funktionalität ===
+
+// Funktion: Öffnet die Kamera für den KI-Pop-up
+async function openCameraForKIModal() {
+    try {
+        kiCurrentStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: kiFacingMode },
+            audio: false
+        });
+        let kiVideo = document.getElementById('ki-camera-stream');
+        if (!kiVideo) {
+            kiVideo = document.createElement('video');
+            kiVideo.id = 'ki-camera-stream';
+            kiVideo.autoplay = true;
+            kiVideo.playsinline = true;
+            kiVideo.style.width = '100%';
+            const modalBody = kiModal.querySelector('.modal-body');
+            modalBody.insertBefore(kiVideo, modalBody.firstChild);
+        }
+        kiVideo.srcObject = kiCurrentStream;
+        kiVideo.style.display = 'block';
+        // Blende die bisherige Bildvorschau aus, solange die Kamera aktiv ist
+        kiImage.style.display = 'none';
+        kiDetectConditionBtn.disabled = true;
+        // Button "Foto aufnehmen" einblenden
+        document.getElementById('ki-capture-btn').style.display = 'inline-block';
+    } catch (err) {
+        console.error('Fehler beim Öffnen der Kamera für KI:', err);
+        alert('Kamera konnte nicht geöffnet werden. Bitte überprüfen Sie die Berechtigungen.');
+    }
+}
+
+
+// Funktion: Nimmt ein Bild aus dem KI-Kamerastream auf
+function captureImageForKIModal() {
+    const kiVideo = document.getElementById('ki-camera-stream');
+    if (!kiVideo) {
+        alert("Kamerastream nicht verfügbar!");
+        return;
+    }
+    // Erstelle (oder verwende) ein Canvas-Element für den KI-Bereich
+    let kiCanvas = document.getElementById('ki-camera-canvas');
+    if (!kiCanvas) {
+        kiCanvas = document.createElement('canvas');
+        kiCanvas.id = 'ki-camera-canvas';
+        kiCanvas.style.display = 'none';
+        document.body.appendChild(kiCanvas);
+    }
+    const context = kiCanvas.getContext('2d');
+    kiCanvas.width = kiVideo.videoWidth;
+    kiCanvas.height = kiVideo.videoHeight;
+    context.drawImage(kiVideo, 0, 0, kiCanvas.width, kiCanvas.height);
+    kiCanvas.toBlob((blob) => {
+        const filename = `ki-camera-${Date.now()}.jpg`;
+        kiStoredFile = new File([blob], filename, { type: 'image/jpeg' });
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            kiImage.src = e.target.result;
+            kiImage.style.display = 'block';
+        };
+        reader.readAsDataURL(kiStoredFile);
+        // Stoppe den Kamera-Stream
+        if (kiCurrentStream) {
+            kiCurrentStream.getTracks().forEach(track => track.stop());
+            kiCurrentStream = null;
+        }
+        // Blende das Video aus
+        if (kiVideo) {
+            kiVideo.style.display = 'none';
+        }
+        kiDetectConditionBtn.disabled = false;
+    }, 'image/jpeg');
+
+    function captureImageForKIModal() {
+    const kiVideo = document.getElementById('ki-camera-stream');
+    if (!kiVideo) {
+        alert("Kamerastream nicht verfügbar!");
+        return;
+    }
+    let kiCanvas = document.getElementById('ki-camera-canvas');
+    if (!kiCanvas) {
+        kiCanvas = document.createElement('canvas');
+        kiCanvas.id = 'ki-camera-canvas';
+        kiCanvas.style.display = 'none';
+        document.body.appendChild(kiCanvas);
+    }
+    const context = kiCanvas.getContext('2d');
+    kiCanvas.width = kiVideo.videoWidth;
+    kiCanvas.height = kiVideo.videoHeight;
+    context.drawImage(kiVideo, 0, 0, kiCanvas.width, kiCanvas.height);
+    kiCanvas.toBlob((blob) => {
+        const filename = `ki-camera-${Date.now()}.jpg`;
+        kiStoredFile = new File([blob], filename, { type: 'image/jpeg' });
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            kiImage.src = e.target.result;
+            kiImage.style.display = 'block';
+        };
+        reader.readAsDataURL(kiStoredFile);
+        if (kiCurrentStream) {
+            kiCurrentStream.getTracks().forEach(track => track.stop());
+            kiCurrentStream = null;
+        }
+        const kiVideo = document.getElementById('ki-camera-stream');
+        if (kiVideo) {
+            kiVideo.style.display = 'none';
+        }
+        kiDetectConditionBtn.disabled = false;
+        // Automatisch den Zustand erkennen auslösen:
+        kiDetectConditionBtn.click();
+    }, 'image/jpeg');
+}
+
+
+}
+
+// "Kamera öffnen" Button: Wenn bereits Kamera aktiv, Bild aufnehmen; ansonsten Kamera öffnen
+kiOpenCameraBtn.addEventListener('click', function() {
+    const kiVideo = document.getElementById('ki-camera-stream');
+    if (kiVideo && kiVideo.style.display === 'block') {
+        captureImageForKIModal();
+    } else {
+        openCameraForKIModal();
+    }
+});
+
+document.getElementById('ki-capture-btn').addEventListener('click', function() {
+    captureImageForKIModal();
+});
+
+kiDetectConditionBtn.addEventListener('click', async function() {
+    if (!kiStoredFile) {
+        alert("Bitte wählen Sie zuerst ein Bild aus!");
+        return;
+    }
+    const partType = kiPartTypeHidden.value;
+    const formData = new FormData();
+    formData.append('file', kiStoredFile);
+    formData.append('part_type', partType);
+
+    try {
+        // KI-Zustandserkennung (an deinen API-Endpunkt)
+        const response = await fetch('/api/detect_condition', {
+            method: 'POST',
+            body: formData
+        });
+        const result = await response.json();
+        if (response.ok) {
+            // Zeige den erkannten Zustand im KI-Modal an
+            kiPartCondition.textContent = result.classification;
+
+            // Jetzt das DataFrame aktualisieren – nutze denselben Endpunkt wie bei "Melden"
+            const updateFormData = new FormData();
+            updateFormData.append('filename', document.getElementById('ki-filename').value);
+            updateFormData.append('bbox_id', kiPartIdHidden.value);
+            updateFormData.append('zustand', result.classification);
+            const isDamaged = ["MDF-Platzer", "Rohr_Kratzer", "Delle"].includes(result.classification);
+            updateFormData.append('reusable', (!isDamaged).toString());
+
+            const updateResponse = await fetch('/update_condition/', {
+                method: 'POST',
+                body: updateFormData
+            });
+            const updateResult = await updateResponse.json();
+            if (updateResponse.ok) {
+                // Aktualisiere das Dropdown und den angezeigten Zustand in der entsprechenden Objektkarte
+                const targetFilename = document.getElementById('ki-filename').value;
+                const targetBboxId = kiPartIdHidden.value;
+                document.querySelectorAll('.condition-form').forEach(form => {
+                    const formFilename = form.querySelector('input[name="filename"]').value;
+                    const formBboxId = form.querySelector('input[name="bbox_id"]').value;
+                    if (formFilename === targetFilename && formBboxId === targetBboxId) {
+                        // Setze das Dropdown auf den erkannten Zustand
+                        const dropdown = form.querySelector('select[name="zustand"]');
+                        if (dropdown) {
+                            dropdown.value = result.classification;
+                        }
+                        // Aktualisiere den angezeigten Zustand im Statusbereich
+                        const propertyItem = form.closest('li');
+                        if (propertyItem) {
+                            // Hier wird angenommen, dass das erste <div> im li den Status enthält
+                            const statusDisplay = propertyItem.querySelector("div");
+                            if (statusDisplay) {
+                                statusDisplay.innerHTML = result.classification;
+                                if (isDamaged) {
+                                    statusDisplay.innerHTML += ' <span class="condition-badge condition-damaged">Beschädigt</span>';
+                                } else {
+                                    statusDisplay.innerHTML += ' <span class="condition-badge condition-good">Wiederverwendbar</span>';
+                                }
+                            }
+                        }
+                    }
+                });
+                // Modal schließen
+                closeKIModal();
+            } else {
+                alert(`Fehler beim Aktualisieren des Zustands: ${updateResult.message}`);
+            }
+        } else {
+            alert(`Fehler: ${result.detail}`);
+        }
+    } catch (error) {
+        console.error("Fehler beim Zustand Erkennen:", error);
+        alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+    }
+});
+
+
+
+// "Abbrechen" Button: Schließt den KI-Pop-up
+kiCancelBtn.addEventListener('click', function() {
+    closeKIModal();
+});
+
+// Event-Listener für Schließen über ein Element mit der Klasse "close-ki-modal"
+document.querySelectorAll('.close-ki-modal').forEach(btn => {
+    btn.addEventListener('click', closeKIModal);
+});
+
+
+
+</script>
+{% endblock %}

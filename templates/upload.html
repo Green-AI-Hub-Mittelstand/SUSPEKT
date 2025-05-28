@@ -1,0 +1,1273 @@
+{% extends "base.html" %}
+
+{% block title %}🌍 System 180 – Home Objekterkennung{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Hauptcontainer Styling */
+.detection-app {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+}
+
+/* Header Styling */
+.header-section {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.header-image-container {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+}
+
+.header-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.header-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.header-title {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.header-subtitle {
+    color: rgba(255,255,255,0.9);
+    font-size: 1.2rem;
+    max-width: 600px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Content Container */
+.content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+/* Info Card */
+.info-card {
+    display: flex;
+    align-items: center;
+    background-color: #e0f2ff;
+    border-left: 4px solid #2196F3;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.info-icon {
+    color: #2196F3;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+.info-content p {
+    margin: 0;
+}
+
+/* Symmetry Selection */
+.symmetry-selection {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.symmetry-selection h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.symmetry-options {
+    display: flex;
+    flex-direction: row; /* Changed from column to row */
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: space-between; /* Distribute items evenly */
+}
+
+.symmetry-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.75rem 1.25rem;
+    background-color: #f5f7fa;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    border: 2px solid transparent;
+    flex: 1;
+    min-width: 200px;
+}
+
+.symmetry-option:hover {
+    background-color: #e8f4fd;
+}
+
+.symmetry-option input {
+    margin-right: 0.5rem;
+}
+
+.option-text {
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.option-description {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Image Preview Grid */
+.image-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.image-card {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.image-preview {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f7fa;
+    overflow: hidden;
+    position: relative;
+}
+
+.image-preview i {
+    font-size: 3rem;
+    color: #ccd4e0;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.file-name {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.view-selection, .view-selection-camera {
+    width: 100%;
+}
+
+.view-dropdown, #camera-view-dropdown {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 0.9rem;
+}
+
+.remove-image {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 25px;
+    height: 25px;
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    z-index: 2;
+    transition: background-color 0.2s;
+}
+
+.remove-image:hover {
+    background-color: rgba(255, 0, 0, 0.9);
+}
+
+/* Button Container */
+.button-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s, transform 0.1s;
+    flex: 1; /* Make buttons take equal width */
+    justify-content: center;
+    min-width: 160px;
+    max-width: 280px;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn i {
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background-color: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1976D2;
+}
+
+.btn-secondary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #388E3C;
+}
+
+.btn-success {
+    background-color: #673AB7;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #512DA8;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Feature Cards */
+.features-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+}
+
+.feature-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #f0f4f8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.feature-icon i {
+    font-size: 1.5rem;
+    color: #2196F3;
+}
+
+.feature-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.feature-card p {
+    color: #666;
+    margin: 0;
+}
+
+/* Modal Styling */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 800px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: #f5f7fa;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.close-modal {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+#camera-stream {
+    width: 100%;
+    max-height: 60vh;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    background-color: #000;
+}
+
+.camera-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.image-counter {
+    padding: 0.5rem 1rem;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.camera-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.view-selection-camera {
+    margin-bottom: 1rem;
+}
+
+/* Loading Animation */
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255,255,255,0.9);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loading p {
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 2rem;
+    }
+
+    .header-subtitle {
+        font-size: 1rem;
+    }
+
+    .button-container {
+        flex-direction: column;
+    }
+
+    .button-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .symmetry-options {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .header-image-container {
+        height: 200px;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="detection-app">
+    <!-- Header mit Hintergrundbild -->
+    <div class="header-section">
+        <div class="header-image-container">
+            <img src="https://www.system180.com/wp-content/uploads/2025/03/System180_PowderCoated_Tubes.jpg" alt="System180 Powder Coated Tubes" class="header-image">
+            <div class="header-overlay">
+                <h1 class="header-title">Intelligente Objekterkennung</h1>
+                <p class="header-subtitle">für System180-Komponenten</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hauptinhalt -->
+    <div class="content-container">
+        <div class="info-card">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <p>Laden Sie bis zu 4 Bilder hoch oder verwenden Sie die Kamera, um System180-Komponenten automatisch zu erkennen.</p>
+            </div>
+        </div>
+
+
+
+        <form id="upload-form" method="post" enctype="multipart/form-data">
+            <input type="file" name="files" accept="image/*" multiple required
+                   style="display: none" id="file-input">
+            <input type="hidden" name="capture_type" id="capture-type-input" value="single">
+
+            <!-- Bild-Vorschau Grid -->
+            <div class="image-preview-grid">
+                {% for i in range(4) %}
+                <div class="image-card" data-card-index="{{ i }}">
+                    <div class="image-preview">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <div class="card-content">
+                        <p class="file-name">Bild hochladen</p>
+                        <!-- View-Auswahl Dropdown (anfangs ausgeblendet) -->
+                        <div class="view-selection" style="display: none;">
+                            <select class="view-dropdown">
+                                <option value="" disabled selected>Ansicht wählen</option>
+                                <option value="front">Vorderansicht</option>
+                                <option value="back">Rückansicht</option>
+                                <option value="left">Linke Seite</option>
+                                <option value="right">Rechte Seite</option>
+                                <option value="any" class="single-option" style="display: none;">Beliebige Ansicht</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Aufnahmetyp-Auswahl -->
+            <div class="symmetry-selection">
+                <h3>Wählen Sie den Aufnahmetyp aus:</h3>
+                <div class="symmetry-options">
+                    <label class="symmetry-option">
+                        <input type="radio" name="capture_type" value="symmetric">
+                        <span class="option-text">Symmetrisch</span>
+                        <span class="option-description">(benötigt nur Vorder- und eine Seitenansicht)</span>
+                    </label>
+                    <label class="symmetry-option">
+                        <input type="radio" name="capture_type" value="asymmetric">
+                        <span class="option-text">Asymmetrisch</span>
+                        <span class="option-description">(benötigt Ansichten von allen Seiten)</span>
+                    </label>
+                    <label class="symmetry-option">
+                        <input type="radio" name="capture_type" value="single" checked>
+                        <span class="option-text">Einzelaufnahme</span>
+                        <span class="option-description">(Ansicht ist egal)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Button-Container -->
+            <div class="button-container">
+                <button type="button" class="btn btn-primary" id="select-files-btn">
+                    <i class="fas fa-upload"></i>
+                    Bilder auswählen
+                </button>
+
+                <button type="button" class="btn btn-primary" id="open-camera-btn">
+                    <i class="fas fa-camera"></i>
+                    Kamera öffnen
+                </button>
+
+                <button type="button" id="detect-objects-btn" class="btn btn-secondary" disabled>
+                    <i class="fas fa-search"></i>
+                    Bilder analysieren
+                </button>
+            </div>
+        </form>
+
+        <!-- Funktionalitätsvorteile -->
+        <div class="features-section">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Schnelle Erkennung</h3>
+                <p>Ergebnisse in Sekundenschnelle dank YOLO-Technologie</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h3>Präzise Identifikation</h3>
+                <p>Hohe Genauigkeit bei der Erkennung von System180-Komponenten</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Mobile Nutzung</h3>
+                <p>Direkter Kamerazugriff für sofortige Bildaufnahme</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Kamera</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <video id="camera-stream" autoplay playsinline></video>
+                <canvas id="camera-canvas" style="display: none;"></canvas>
+
+                <div class="camera-controls">
+                    <div class="image-counter">
+                        <i class="fas fa-images"></i> Aufgenommene Bilder: <span id="image-count">0</span>/4
+                    </div>
+                    <div class="view-selection-camera">
+                        <select id="camera-view-dropdown">
+                            <option value="" disabled selected>Ansicht wählen</option>
+                            <option value="front">Vorderansicht</option>
+                            <option value="back">Rückansicht</option>
+                            <option value="left">Linke Seite</option>
+                            <option value="right">Rechte Seite</option>
+                            <option value="any" class="single-camera-option" style="display: none;">Beliebige Ansicht</option>
+                        </select>
+                    </div>
+                    <div class="camera-buttons">
+                        <button id="capture-btn" class="btn btn-primary">
+                            <i class="fas fa-camera"></i>
+                            Foto aufnehmen
+                        </button>
+                        <button id="switch-camera-btn" class="btn btn-secondary">
+                            <i class="fas fa-sync"></i>
+                            Kamera wechseln
+                        </button>
+                        <button id="modal-analyze-btn" class="btn btn-success" disabled>
+                            <i class="fas fa-search"></i>
+                            Bilder analysieren
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Bilder werden verarbeitet...</p>
+    </div>
+
+
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const fileInput = document.getElementById('file-input');
+const detectObjectsBtn = document.getElementById('detect-objects-btn');
+const uploadForm = document.getElementById('upload-form');
+const loading = document.getElementById('loading');
+const selectFilesBtn = document.getElementById('select-files-btn');
+const openCameraBtn = document.getElementById('open-camera-btn');
+const cameraModal = document.getElementById('camera-modal');
+const closeModal = document.querySelector('.close-modal');
+const video = document.getElementById('camera-stream');
+const canvas = document.getElementById('camera-canvas');
+const captureBtn = document.getElementById('capture-btn');
+const switchCameraBtn = document.getElementById('switch-camera-btn');
+const modalAnalyzeBtn = document.getElementById('modal-analyze-btn');
+const imageCountDisplay = document.getElementById('image-count');
+const cameraViewDropdown = document.getElementById('camera-view-dropdown');
+const captureTypeRadios = document.querySelectorAll('input[name="capture_type"]');
+const captureTypeInput = document.getElementById('capture-type-input');
+
+let currentStream = null;
+let facingMode = 'environment'; // Start with back camera
+let captureType = 'single'; // Default: Einzelaufnahme
+
+// Track the views for each uploaded image
+let imageViews = {};
+
+// Event listeners for capture type selection
+captureTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        captureType = this.value;
+        captureTypeInput.value = captureType; // Update hidden form input
+        updateViewOptions();
+        updateRequiredViews();
+    });
+});
+
+// Update dropdown options based on capture type
+function updateViewOptions() {
+    const singleOptions = document.querySelectorAll('.single-option');
+    const singleCameraOption = document.querySelector('.single-camera-option');
+
+    if (captureType === 'single') {
+        // Show "Beliebige Ansicht" option and hide other options when "Einzelaufnahme" is selected
+        singleOptions.forEach(option => option.style.display = 'block');
+        if (singleCameraOption) singleCameraOption.style.display = 'block';
+
+        // Auto-select "Beliebige Ansicht" for existing images
+        document.querySelectorAll('.view-dropdown').forEach(dropdown => {
+            if (dropdown.style.display !== 'none') {
+                dropdown.value = 'any';
+                const filename = dropdown.dataset.filename;
+                if (filename) {
+                    imageViews[filename] = 'any';
+                }
+            }
+        });
+
+        // Set camera dropdown to "Beliebige Ansicht"
+        if (cameraViewDropdown) {
+            cameraViewDropdown.value = 'any';
+        }
+    } else {
+        // Hide "Beliebige Ansicht" option for symmetrisch/asymmetrisch
+        singleOptions.forEach(option => option.style.display = 'none');
+        if (singleCameraOption) singleCameraOption.style.display = 'none';
+
+        // Clear selection if "Beliebige Ansicht" was selected
+        document.querySelectorAll('.view-dropdown').forEach(dropdown => {
+            if (dropdown.value === 'any') {
+                dropdown.value = '';
+                const filename = dropdown.dataset.filename;
+                if (filename) {
+                    imageViews[filename] = '';
+                }
+            }
+        });
+
+        // Clear camera dropdown if "Beliebige Ansicht" was selected
+        if (cameraViewDropdown && cameraViewDropdown.value === 'any') {
+            cameraViewDropdown.value = '';
+        }
+    }
+
+    // Debug-Log von imageViews
+    console.log("Aktuelle Bildansichten:", imageViews);
+}
+
+// Update UI based on capture type selection
+function updateRequiredViews() {
+    const cards = document.querySelectorAll('.image-card');
+
+    if (captureType === 'symmetric') {
+        // For symmetric furniture, we only need front and one side view
+        cards.forEach((card, index) => {
+            if (index >= 2 && !card.querySelector('img')) {
+                card.style.opacity = '0.5';
+                const cardContent = card.querySelector('.card-content');
+                if (cardContent && !cardContent.querySelector('.symmetric-note')) {
+                    const note = document.createElement('p');
+                    note.className = 'symmetric-note';
+                    note.style.color = '#999';
+                    note.style.fontSize = '0.8rem';
+                    note.style.marginTop = '0.5rem';
+                    note.textContent = 'Optional bei symmetrischen Möbeln';
+                    cardContent.appendChild(note);
+                }
+            } else {
+                card.style.opacity = '1';
+                const note = card.querySelector('.symmetric-note');
+                if (note) note.remove();
+            }
+        });
+    } else if (captureType === 'single') {
+        // For single capture, we only need one image
+        cards.forEach((card, index) => {
+            if (index >= 1 && !card.querySelector('img')) {
+                card.style.opacity = '0.5';
+                const cardContent = card.querySelector('.card-content');
+                if (cardContent && !cardContent.querySelector('.single-note')) {
+                    const note = document.createElement('p');
+                    note.className = 'single-note';
+                    note.style.color = '#999';
+                    note.style.fontSize = '0.8rem';
+                    note.style.marginTop = '0.5rem';
+                    note.textContent = 'Optional bei Einzelaufnahme';
+                    cardContent.appendChild(note);
+                }
+            } else {
+                card.style.opacity = '1';
+                const note = card.querySelector('.single-note');
+                if (note) note.remove();
+            }
+        });
+
+        // Show view selection but auto-select "any" for single capture
+        document.querySelectorAll('.view-selection').forEach(selection => {
+            if (selection.parentElement.parentElement.querySelector('img')) {
+                selection.style.display = 'block';
+                const dropdown = selection.querySelector('.view-dropdown');
+                if (dropdown && dropdown.value !== 'any') {
+                    dropdown.value = 'any';
+                    const filename = dropdown.dataset.filename;
+                    if (filename) {
+                        imageViews[filename] = 'any';
+                    }
+                }
+            }
+        });
+    } else {
+        // For asymmetric furniture, we need all four views
+        cards.forEach(card => {
+            card.style.opacity = '1';
+            const note = card.querySelector('.symmetric-note') || card.querySelector('.single-note');
+            if (note) note.remove();
+        });
+    }
+}
+
+// Initialize the UI based on default capture type selection
+updateViewOptions();
+updateRequiredViews();
+
+// Event Listener für die Cards
+document.querySelectorAll('.image-card').forEach(card => {
+    card.addEventListener('click', function() {
+        if (!this.querySelector('img')) {
+            fileInput.click();
+        }
+    });
+});
+
+selectFilesBtn.addEventListener('click', () => fileInput.click());
+
+// Global variable to store all files
+let storedFiles = [];
+
+fileInput.addEventListener('change', function(e) {
+    const newFiles = Array.from(this.files);
+
+    // Add new files to stored files, respecting the 4 file limit
+    storedFiles = [...storedFiles, ...newFiles];
+    if (storedFiles.length > 4) {
+        alert('Maximale Anzahl von 4 Bildern erreicht! Überzählige Bilder werden nicht hinzugefügt.');
+        storedFiles = storedFiles.slice(0, 4);
+    }
+
+    // Update the file input with all stored files
+    const dtTransfer = new DataTransfer();
+    storedFiles.forEach(file => dtTransfer.items.add(file));
+    fileInput.files = dtTransfer.files;
+
+    updatePreviewCards(storedFiles);
+    updateImageCount();
+});
+
+
+
+detectObjectsBtn.addEventListener('click', function() {
+    // Bei Einzelaufnahme automatisch "any" für alle Bilder setzen
+    if (captureType === 'single') {
+        document.querySelectorAll('.image-card').forEach((card) => {
+            if (card.querySelector('img')) {
+                const removeBtn = card.querySelector('.remove-image');
+                if (removeBtn) {
+                    const filename = removeBtn.dataset.filename;
+                    if (filename) {
+                        imageViews[filename] = 'any';
+                    }
+                }
+            }
+        });
+    }
+
+    // Get values of all dropdowns for images that have been uploaded
+    const imageCards = document.querySelectorAll('.image-card');
+    const viewValues = [];
+    let missingViews = [];
+
+    // Only check for missing views if we're not in single capture mode
+    if (captureType !== 'single') {
+        imageCards.forEach((card, index) => {
+            // Only check cards that have an image
+            if (card.querySelector('img')) {
+                const dropdown = card.querySelector('.view-dropdown');
+                if (dropdown) {
+                    if (!dropdown.value) {
+                        missingViews.push(`Bild ${index + 1}`);
+                    } else {
+                        viewValues.push(dropdown.value);
+                    }
+                }
+            }
+        });
+
+        // Alert if any views are missing
+        if (missingViews.length > 0) {
+            alert(`Bitte wählen Sie die Ansicht für ${missingViews.join(', ')} aus.`);
+            return;
+        }
+    }
+
+    // Check if we have at least one image
+    if (storedFiles.length === 0) {
+        alert('Bitte laden Sie mindestens ein Bild hoch.');
+        return;
+    }
+
+    // Create a set of the unique views we have
+    const viewsSet = new Set(viewValues);
+
+    // Check requirements based on capture type
+    if (captureType === 'asymmetric') {
+        // For asymmetric, check if we have all 4 views
+        if (viewsSet.size < 4 || !viewsSet.has('front') || !viewsSet.has('back') ||
+            !viewsSet.has('left') || !viewsSet.has('right')) {
+            alert('Für asymmetrische Möbel benötigen Sie alle 4 Ansichten (Vorne, Hinten, Links, Rechts).');
+            return;
+        }
+    } else if (captureType === 'symmetric') {
+        // For symmetric, check if we have at least front and one side
+        if (!viewsSet.has('front') || (!viewsSet.has('left') && !viewsSet.has('right'))) {
+            alert('Für symmetrische Möbel benötigen Sie mindestens die Vorderansicht und eine Seitenansicht.');
+            return;
+        }
+    }
+    // For single capture, no specific view requirements
+
+    // Debug-Log der zu sendenden Daten
+    console.log("Sende image_views:", imageViews);
+    console.log("Sende capture_type:", captureType);
+
+    // First, remove any existing image_views inputs to avoid duplicates
+    const existingInputs = document.querySelectorAll('input[name="image_views"]');
+    existingInputs.forEach(input => input.remove());
+
+    // Create a new form data object
+    const form = document.getElementById('upload-form');
+
+    // Add view information as hidden input fields
+    Object.entries(imageViews).forEach(([filename, view]) => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'image_views';
+        hiddenInput.value = `${filename}:${view}`;
+        form.appendChild(hiddenInput);
+    });
+
+    // Set capture type
+    const captureTypeInput = document.getElementById('capture-type-input');
+    captureTypeInput.value = captureType;
+
+    // Submit form
+    if (fileInput.files.length > 0) {
+        loading.style.display = 'flex';
+        form.action = "/detect/";
+        form.submit();
+    }
+});
+
+
+// Camera functionality
+openCameraBtn.addEventListener('click', openCamera);
+closeModal.addEventListener('click', closeCamera);
+captureBtn.addEventListener('click', captureImage);
+switchCameraBtn.addEventListener('click', switchCamera);
+
+async function openCamera() {
+    try {
+        currentStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facingMode },
+            audio: false
+        });
+        video.srcObject = currentStream;
+        cameraModal.style.display = 'flex';
+        updateImageCount(); // Update counter when opening camera
+
+        // Bei Einzelaufnahme automatisch "any" als Ansicht setzen
+        if (captureType === 'single' && cameraViewDropdown) {
+            cameraViewDropdown.value = 'any';
+        }
+    } catch (err) {
+        console.error('Error accessing camera:', err);
+        alert('Kamera konnte nicht geöffnet werden. Bitte überprüfen Sie die Berechtigungen.');
+    }
+}
+
+function closeCamera() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+    cameraModal.style.display = 'none';
+}
+
+async function switchCamera() {
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+    await openCamera();
+}
+
+function captureImage() {
+    if (fileInput.files.length >= 4) {
+        alert('Maximale Anzahl von 4 Bildern erreicht!');
+        return;
+    }
+
+    // Check if view is selected (except for single capture mode)
+    if (captureType !== 'single' && !cameraViewDropdown.value) {
+        alert('Bitte wählen Sie eine Ansicht aus, bevor Sie ein Foto aufnehmen.');
+        return;
+    }
+
+    // For single capture mode, set view to 'any' automatically
+    if (captureType === 'single' && !cameraViewDropdown.value) {
+        cameraViewDropdown.value = 'any';
+    }
+
+    const context = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+        const filename = `camera-${Date.now()}.jpg`;
+        const file = new File([blob], filename, { type: 'image/jpeg' });
+
+        // Store the selected view for this image
+        imageViews[filename] = cameraViewDropdown.value;
+        console.log(`Bild aufgenommen: ${filename} mit Ansicht ${cameraViewDropdown.value}`);
+
+        addImageToFileInput(file);
+        updateImageCount();
+
+        // Reset the camera view dropdown for the next capture, unless in single mode
+        if (captureType !== 'single') {
+            cameraViewDropdown.value = '';
+        }
+    }, 'image/jpeg');
+}
+
+function addImageToFileInput(newFile) {
+    // Add to stored files array
+    storedFiles.push(newFile);
+    if (storedFiles.length > 4) {
+        storedFiles = storedFiles.slice(0, 4);
+    }
+
+    // Update file input
+    const dtTransfer = new DataTransfer();
+    storedFiles.forEach(file => dtTransfer.items.add(file));
+    fileInput.files = dtTransfer.files;
+
+    updatePreviewCards(storedFiles);
+    detectObjectsBtn.disabled = false;
+    modalAnalyzeBtn.disabled = false;
+}
+
+// Update image counter and analyze button states
+function updateImageCount() {
+    const currentCount = storedFiles.length;
+    imageCountDisplay.textContent = currentCount;
+
+    // Enable/disable both analyze buttons based on image count
+    const hasImages = currentCount > 0;
+    detectObjectsBtn.disabled = !hasImages;
+    modalAnalyzeBtn.disabled = !hasImages;
+
+    // Update max images warning
+    if (currentCount >= 4) {
+        captureBtn.disabled = true;
+        captureBtn.title = 'Maximale Anzahl von Bildern erreicht';
+    } else {
+        captureBtn.disabled = false;
+        captureBtn.title = '';
+    }
+}
+// Event listener for modal analyze button
+m// Event listener for modal analyze button
+modalAnalyzeBtn.addEventListener('click', function() {
+    // Bei Einzelaufnahme automatisch "any" für alle Bilder setzen
+    if (captureType === 'single') {
+        storedFiles.forEach(file => {
+            imageViews[file.name] = 'any';
+        });
+
+        if (cameraViewDropdown && !cameraViewDropdown.value) {
+            cameraViewDropdown.value = 'any';
+        }
+    }
+
+    // Check if the camera view dropdown has a value (only if we're about to take a picture and not in single mode)
+    if (captureType !== 'single' && storedFiles.length < 4 && !cameraViewDropdown.value) {
+        alert('Bitte wählen Sie eine Ansicht für das aufzunehmende Bild aus.');
+        return;
+    }
+
+    if (fileInput.files.length > 0) {
+        loading.style.display = 'flex';
+        closeCamera();
+
+        // Debug-Log der zu sendenden Daten
+        console.log("Sende image_views vom Modal:", imageViews);
+        console.log("Sende capture_type vom Modal:", captureType);
+
+        // First, remove any existing image_views inputs to avoid duplicates
+        const existingInputs = document.querySelectorAll('input[name="image_views"]');
+        existingInputs.forEach(input => input.remove());
+
+        // Create a new form
+        const form = document.getElementById('upload-form');
+
+        // Add view information as hidden input fields
+        Object.entries(imageViews).forEach(([filename, view]) => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'image_views';
+            hiddenInput.value = `${filename}:${view}`;
+            form.appendChild(hiddenInput);
+        });
+
+        // Set capture type
+        const captureTypeInput = document.getElementById('capture-type-input');
+        captureTypeInput.value = captureType;
+
+        form.action = "/detect/";
+        form.submit();
+    }
+});
+
+function updatePreviewCards(files) {
+    const cards = document.querySelectorAll('.image-card');
+
+    cards.forEach((card, index) => {
+        if (index < files.length) {
+            const file = files[index];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // Get the current view value from the dropdown if it exists
+                let currentView = '';
+                const existingDropdown = card.querySelector('.view-dropdown');
+                if (existingDropdown) {
+                    currentView = existingDropdown.value;
+                }
+
+                // Store the view if it exists in our tracking object
+                if (currentView) {
+                    imageViews[file.name] = currentView;
+                }
+
+                // For single capture, automatically set view to 'any'
+                if (captureType === 'single' && !imageViews[file.name]) {
+                    imageViews[file.name] = 'any';
+                }
+
+                // Update card HTML
+                card.innerHTML = `
+                    <div class="image-preview">
+                        <span class="remove-image" data-filename="${file.name}">×</span>
+                        <img src="${e.target.result}" alt="Vorschau">
+                    </div>
+                    <div class="card-content">
+                        <p class="file-name">${file.name}</p>
+                        <div class="view-selection" style="display: block;">
+                            <select class="view-dropdown" data-filename="${file.name}">
+                                <option value="" disabled ${!imageViews[file.name] ? 'selected' : ''}>Ansicht wählen</option>
+                                <option value="front" ${imageViews[file.name] === 'front' ? 'selected' : ''}>Vorderansicht</option>
+                                <option value="back" ${imageViews[file.name] === 'back' ? 'selected' : ''}>Rückansicht</option>
+                                <option value="left" ${imageViews[file.name] === 'left' ? 'selected' : ''}>Linke Seite</option>
+                                <option value="right" ${imageViews[file.name] === 'right' ? 'selected' : ''}>Rechte Seite</option>
+                                <option value="any" class="single-option" style="display: ${captureType === 'single' ? 'block' : 'none'}" ${imageViews[file.name] === 'any' ? 'selected' : ''}>Beliebige Ansicht</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+
+                // Add click event listener for the remove button
+                const removeBtn = card.querySelector('.remove-image');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        removeImage(this.dataset.filename);
+                    });
+                }
+
+                // Add change event listener for the dropdown
+                const dropdown = card.querySelector('.view-dropdown');
+                if (dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        imageViews[this.dataset.filename] = this.value;
+                        console.log(`View für ${this.dataset.filename} geändert zu ${this.value}`);
+                    });
+                }
+            };
+
+            reader.readAsDataURL(file);
+        } else {
+            card.innerHTML = `
+                <div class="image-preview">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="card-content">
+                    <p class="file-name">Bild hochladen</p>
+                    <div class="view-selection" style="display: none;">
+                        <select class="view-dropdown">
+                            <option value="" disabled selected>Ansicht wählen</option>
+                            <option value="front">Vorderansicht</option>
+                            <option value="back">Rückansicht</option>
+                            <option value="left">Linke Seite</option>
+                            <option value="right">Rechte Seite</option>
+                            <option value="any" class="single-option" style="display: ${captureType === 'single' ? 'block' : 'none'}">Beliebige Ansicht</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    // Update required views based on capture type selection
+    updateRequiredViews();
+}
+
+function removeImage(filename) {
+    // Remove from stored files
+    storedFiles = storedFiles.filter(file => file.name !== filename);
+
+    // Remove from imageViews tracking
+    delete imageViews[filename];
+    console.log(`Bild entfernt: ${filename}`);
+
+    // Update file input
+    const dtTransfer = new DataTransfer();
+    storedFiles.forEach(file => dtTransfer.items.add(file));
+    fileInput.files = dtTransfer.files;
+
+    updatePreviewCards(storedFiles);
+    updateImageCount();
+}
+</script>
+{% endblock %}

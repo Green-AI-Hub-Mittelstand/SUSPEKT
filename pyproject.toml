@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "system180-webapp"
+version = "0.1.0"
+description = "An AI-powered project for identifying, classifying, and assessing the condition of modular furniture components"
+authors = [
+    { name = "Jonas Brotzeit", email = "jonas.brozeit@dfki.de" },
+    { name = "Abdullah Farrukh", email = "abdullah.farrukh@dfki.de" },
+    { name = "Al Harith Farhad", email = "al-harith.farhad@dfki.de" },
+    { name = "Hooman Tavakoli", email = "hooman.tavakoli_ghinani@dfki.de" },
+    { name = "Peter Stein", email = "peter.stein@dfki.de" },
+]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+dependencies = [
+    "aiofiles",
+    "databases~=0.9.0",
+    "fastapi~=0.115.2",
+    "jinja2",
+    "matplotlib~=3.5.1",
+    "neo4j~=5.28.0",
+    "numpy~=1.26.4",
+    "opencv-python~=4.6.0.66",
+    "passlib~=1.7.4",
+    "pillow~=9.0.1",
+    "pydantic~=2.9.2",
+    "python-dotenv~=1.0.1",
+    "python-jose~=3.3.0",
+    "python-multipart",
+    "scikit-learn",
+    "scipy~=1.15.2",
+    "SQLAlchemy~=2.0.36",
+    "torch",
+    "ultralytics~=8.3.17",
+    "uvicorn~=0.32.0",
+    "itsdangerous",
+]
+
+[tool.setuptools]
+packages = ["webapp"]
+
+[project.optional-dependencies]
+test = [
+    "black",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true

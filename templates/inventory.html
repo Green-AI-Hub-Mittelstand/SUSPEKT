@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Digitales Lager{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header mit Bild -->
+    <div class="relative">
+        <div class="w-full h-48 overflow-hidden">
+            <img src="https://www.system180.com/wp-content/uploads/2021/06/System180_Made-In_Berlin_-scaled.jpg"
+                 alt="System180 Made in Berlin"
+                 class="w-full h-full object-cover">
+        </div>
+        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center">
+            <div class="container mx-auto px-6">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white">
+                    Inventarübersicht
+                </h1>
+                <p class="text-xl text-gray-200 mt-2">Ressourceneffizienz & Bestandsmanagement</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hauptinhalt -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Statusleiste -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-wrap items-center justify-between">
+            <div class="flex items-center mb-2 md:mb-0">
+                <span class="text-gray-700 font-medium">📦 Bestandsdaten</span>
+            </div>
+            <div class="flex items-center">
+                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    Aktualisiert: Heute
+                </span>
+            </div>
+        </div>
+
+        <!-- Tabelle -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Inventarübersicht</h2>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-3 border-b border-gray-200">
+                                <div class="font-semibold text-left text-gray-700">Auftrag</div>
+                                <input type="text" id="filterAuftrag" class="mt-2 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="🔎 Filter">
+                            </th>
+                            <th class="px-4 py-3 border-b border-gray-200">
+                                <div class="font-semibold text-left text-gray-700">Komponente</div>
+                                <input type="text" id="filterKomponente" class="mt-2 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="🔎 Filter">
+                            </th>
+                            <th class="px-4 py-3 border-b border-gray-200">
+                                <div class="font-semibold text-left text-gray-700">Material</div>
+                                <input type="text" id="filterMaterial" class="mt-2 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="🔎 Filter">
+                            </th>
+                            <th class="px-4 py-3 border-b border-gray-200">
+                                <div class="font-semibold text-left text-gray-700">Zustand</div>
+                                <input type="text" id="filterZustand" class="mt-2 w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="🔎 Filter">
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTable">
+                        {% for item in inventory %}
+                        <tr class="hover:bg-gray-50 border-b border-gray-200 last:border-b-0">
+                            <td class="px-4 py-3 text-gray-700">{{ item.Auftrag }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ item.Komponente }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ item.Material }}</td>
+                            <td class="px-4 py-3">
+                                <span class="{% if item.Zustand == 'Neu' %}bg-green-100 text-green-800{% elif item.Zustand == 'Gebraucht' %}bg-yellow-100 text-yellow-800{% elif item.Zustand == 'Reparaturbedürftig' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %} text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                    {{ item.Zustand }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabellenfuß mit Statistik -->
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 text-sm text-gray-500">
+                Gesamtanzahl: {{ inventory|length }} Einträge
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p>© 2025 System180</p>
+                </div>
+                <div>
+                    <p>Made in Berlin</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Funktion zum Filtern der Tabelle
+    function filterTable() {
+        let auftragFilter = document.getElementById("filterAuftrag").value.toLowerCase();
+        let komponenteFilter = document.getElementById("filterKomponente").value.toLowerCase();
+        let materialFilter = document.getElementById("filterMaterial").value.toLowerCase();
+        let zustandFilter = document.getElementById("filterZustand").value.toLowerCase();
+
+        let table = document.getElementById("inventoryTable");
+        let rows = table.getElementsByTagName("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+            let cells = rows[i].getElementsByTagName("td");
+            if (cells.length > 0) {
+                let auftragText = cells[0].innerText.toLowerCase();
+                let komponenteText = cells[1].innerText.toLowerCase();
+                let materialText = cells[2].innerText.toLowerCase();
+                let zustandText = cells[3].innerText.toLowerCase();
+
+                if (
+                    auftragText.includes(auftragFilter) &&
+                    komponenteText.includes(komponenteFilter) &&
+                    materialText.includes(materialFilter) &&
+                    zustandText.includes(zustandFilter)
+                ) {
+                    rows[i].style.display = ""; // Zeige die Zeile
+                } else {
+                    rows[i].style.display = "none"; // Verstecke die Zeile
+                }
+            }
+        }
+    }
+
+    // Event-Listener für Filtereingaben
+    document.getElementById("filterAuftrag").addEventListener("input", filterTable);
+    document.getElementById("filterKomponente").addEventListener("input", filterTable);
+    document.getElementById("filterMaterial").addEventListener("input", filterTable);
+    document.getElementById("filterZustand").addEventListener("input", filterTable);
+</script>
+{% endblock %}

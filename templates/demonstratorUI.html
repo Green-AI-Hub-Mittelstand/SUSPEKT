@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamera-System mit YOLO-Objekterkennung und Messfunktion</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .camera-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 0 auto;
+            max-width: 1800px;
+        }
+        .camera-feed {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        .camera-feed h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #444;
+        }
+        .camera-feed img {
+            width: 100%;
+            display: block;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .webcam-container {
+            position: absolut;
+        }
+
+        .control-panel {
+            margin: 20px auto;
+            max-width: 600px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .btn-group {
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn.active {
+            background-color: #27ae60;
+        }
+        .btn.reset {
+            background-color: #e74c3c;
+        }
+        .btn.reset:hover {
+            background-color: #c0392b;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        @media (max-width: 1200px) {
+            .camera-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-box {
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 15px;
+            color: #3c763d;
+        }
+
+    </style>
+</head>
+<body>
+<div>
+    <h1>System 180 - Sortierdemonstrator</h1>
+
+    <div class="control-panel">
+        <h2>Mess-Steuerung</h2>
+        <p>Mit der ArUco-Markererkennung (50mm × 50mm) können Größen im Webcam-Bild gemessen werden.</p>
+        <div class="btn-group">
+            <button id="straight-mode" class="btn">Gerade Linie</button>
+            <button id="diagonal-mode" class="btn">Diagonale</button>
+            <button id="offset-mode" class="btn">Versetzte Gerade</button>
+            <button id="reset-measure" class="btn reset">Zurücksetzen</button>
+        </div>
+        <div class="status" id="status-message">
+            Wählen Sie einen Messmodus und klicken Sie auf das Webcam-Bild
+        </div>
+    </div>
+
+    <div >
+        <div class="camera-feed">
+            <h2>OAK-1 Max (Links)</h2>
+            <img src="/stream/left" alt="Linke OAK Kamera">
+        </div>
+
+        <div class="camera-feed">
+            <h2>Logitech Webcam mit Aruco-Messung</h2>
+            <img src="/stream/webcam" alt="Webcam Stream">
+            <div class="info-box">
+                <p>Aruco-Marker im Bild platzieren, um Maße in Millimetern zu erhalten!</p>
+            </div>
+        </div>
+
+        <div class="camera-feed">
+            <h2>OAK-1 Max (Rechts)</h2>
+            <img src="/stream/right" alt="Rechte OAK Kamera">
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <h2>Fehlertypen</h2>
+        <div class="btn-group" style="flex-wrap: wrap;">
+            <button class="btn" style="background-color: #2ecc71;">KI-Zustandserkennung (Kategorie KI)</button>
+            <button class="btn" style="background-color: #27ae60;">Verbogen (Kategorie Geometriefehler)</button>
+            <button class="btn" style="background-color: #1e8449;">Delle (Kategorie Geometriefehler)</button>
+            <button class="btn" style="background-color: #229954;">Verschmutzt (Optischer Fehler)</button>
+            <button class="btn" style="background-color: #196f3d;">Kratzer (Optischer Fehler)</button>
+        </div>
+    </div>
+</div>
+    <script>
+        // WebSocket-Verbindung aufbauen
+        const socket = new WebSocket(`ws://${window.location.host}/ws`);
+        let currentMode = null;
+
+        // Status-Anzeige
+        const statusMessage = document.getElementById('status-message');
+
+        // Buttons
+        const straightMode = document.getElementById('straight-mode');
+        const diagonalMode = document.getElementById('diagonal-mode');
+        const offsetMode = document.getElementById('offset-mode');
+        const resetButton = document.getElementById('reset-measure');
+
+        // WebSocket-Ereignisse
+        socket.onopen = () => {
+            console.log('WebSocket-Verbindung geöffnet');
+            statusMessage.textContent = 'Verbunden. Wählen Sie einen Messmodus.';
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket-Verbindung geschlossen');
+            statusMessage.textContent = 'Verbindung getrennt. Laden Sie die Seite neu.';
+            statusMessage.style.color = '#e74c3c';
+        };
+
+        socket.onmessage = (event) => {
+            const response = JSON.parse(event.data);
+            console.log('Server-Antwort:', response);
+
+            if (response.status === 'success') {
+                statusMessage.textContent = response.message;
+                statusMessage.style.color = '#27ae60';
+            } else {
+                statusMessage.textContent = `Fehler: ${response.message}`;
+                statusMessage.style.color = '#e74c3c';
+            }
+        };
+
+        // Button-Ereignisse
+        straightMode.addEventListener('click', () => {
+            setMode('straight');
+            updateActiveButtons(straightMode);
+        });
+
+        diagonalMode.addEventListener('click', () => {
+            setMode('diagonal');
+            updateActiveButtons(diagonalMode);
+        });
+
+        offsetMode.addEventListener('click', () => {
+            setMode('offset');
+            updateActiveButtons(offsetMode);
+        });
+
+        resetButton.addEventListener('click', () => {
+            resetMeasurement();
+        });
+
+
+        
+        // Funktion zum Setzen des Messmodus
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Modus zum Server senden
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'set_mode',
+                    mode: mode
+                }));
+            }
+            
+            let modeText = '';
+            switch (mode) {
+                case 'straight':
+                    modeText = 'Gerade Linie';
+                    break;
+                case 'diagonal':
+                    modeText = 'Diagonale';
+                    break;
+                case 'offset':
+                    modeText = 'Versetzte Gerade';
+                    break;
+            }
+            
+            statusMessage.textContent = `Modus: ${modeText}. Klicken Sie auf das Webcam-Bild.`;
+        }
+        
+        // Funktion zum Zurücksetzen der Messung
+        function resetMeasurement() {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'reset'
+                }));
+            }
+            
+            statusMessage.textContent = 'Messung zurückgesetzt.';
+        }
+        
+        // Funktion zum Aktualisieren der aktiven Buttons
+        function updateActiveButtons(activeButton) {
+            const buttons = [straightMode, diagonalMode, offsetMode];
+            
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            activeButton.classList.add('active');
+        }
+        
+        // Funktion zum Behandeln von Klicks auf dem Webcam-Bild
+        function handleWebcamClick(event) {
+            if (!currentMode) {
+                statusMessage.textContent = 'Wählen Sie zuerst einen Messmodus.';
+                statusMessage.style.color = '#e74c3c';
+                return;
+            }
+            
+            // Positionen berechnen
+            const overlay = event.currentTarget;
+            const rect = overlay.getBoundingClientRect();
+            
+            const x = Math.round((event.clientX - rect.left) * (overlay.offsetWidth / rect.width));
+            const y = Math.round((event.clientY - rect.top) * (overlay.offsetHeight / rect.height));
+            
+            // Klick zum Server senden
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'click',
+                    x: x,
+                    y: y
+                }));
+            }
+            
+            console.log(`Klick auf Webcam: x=${x}, y=${y}, mode=${currentMode}`);
+        }
+    </script>
+</body>
+</html>

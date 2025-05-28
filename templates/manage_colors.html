@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}🌍 System 180 – Verwaltung {% endblock %}
+
+{% block content %}
+<div class="color-management-container">
+    <!-- Header-Bereich mit Titel und Beschreibung -->
+    <div class="section-header">
+        <h1 class="page-title">
+            <i class="fas fa-palette"></i> Unidekor-Farben verwalten
+        </h1>
+        <p class="page-description">Verwalten Sie hier Ihr Farbsystem für die automatische Farberkennung</p>
+    </div>
+
+    <!-- Hauptbereich mit Tabelle und Formular -->
+    <div class="content-grid">
+        <!-- Tabelle mit vorhandenen Farben -->
+        <div class="color-table-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-list"></i> Vorhandene Farben
+                    </h2>
+                    <span class="color-count">{{ colors|length }} Farben</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="color-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Hex-Code</th>
+                                    <th>NCS-Code</th>
+                                    <th>Farbmuster</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for name, color in colors.items() %}
+                                <tr>
+                                    <td class="color-name">{{ name }}</td>
+                                    <td class="color-hex">{{ color.hex_code }}</td>
+                                    <td class="color-ncs">{{ color.ncs_code }}</td>
+                                    <td class="color-sample">
+                                        <div class="color-preview" style="background-color: {{ color.hex_code }}"></div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formular zum Hinzufügen neuer Farben -->
+        <div class="add-color-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-plus-circle"></i> Neue Farbe hinzufügen
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form id="addColorForm" class="add-color-form">
+                        <div class="form-group">
+                            <label for="name">Farbname:</label>
+                            <input type="text" id="name" name="name" required
+                                   placeholder="z.B. Verkehrsrot, Himmelblau">
+                        </div>
+
+                        <div class="form-group color-preview-group">
+                            <label for="hex_code">Farbwert:</label>
+                            <div class="color-input-container">
+                                <input type="color" id="hex_code" name="hex_code" required>
+                                <span id="hex_code_text">#000000</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ncs_code">NCS-Code:</label>
+                            <input type="text" id="ncs_code" name="ncs_code" required
+                                   placeholder="z.B. S 1080-Y90R">
+                            <div class="hint-text">Natural Color System Referenzcode</div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-save"></i> Farbe hinzufügen
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="message" class="message-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hauptcontainer */
+    .color-management-container {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        color: #333;
+    }
+
+    /* Header-Bereich */
+    .section-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+        color: #2196F3;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .page-description {
+        font-size: 1rem;
+        color: #666;
+        margin: 0;
+    }
+
+    /* Grid-Layout für Content */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    @media (min-width: 992px) {
+        .content-grid {
+            grid-template-columns: 3fr 2fr;
+        }
+    }
+
+    /* Card-Komponente */
+    .card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .card-header {
+        padding: 1.2rem 1.5rem;
+        background: linear-gradient(135deg, #2196F3, #1565C0);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .color-count {
+        background-color: rgba(255,255,255,0.2);
+        padding: 0.3rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+
+    /* Farbtabelle */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .color-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+    .color-table th,
+    .color-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .color-table th {
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .color-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .color-preview {
+        width: 40px;
+        height: 24px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* Formular zum Hinzufügen */
+    .add-color-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: #444;
+    }
+
+    .form-group input[type="text"] {
+        padding: 0.8rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.95rem;
+    }
+
+    .form-group input[type="text"]:focus {
+        border-color: #2196F3;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(33,150,243,0.2);
+    }
+
+    .color-input-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    input[type="color"] {
+        width: 50px;
+        height: 40px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #hex_code_text {
+        font-family: monospace;
+        font-size: 1rem;
+        background-color: #f5f5f5;
+        padding: 0.5rem;
+        border-radius: 4px;
+        min-width: 70px;
+    }
+
+    .hint-text {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 0.2rem;
+    }
+
+    /* Button und Aktionen */
+    .form-actions {
+        margin-top: 0.5rem;
+    }
+
+    .submit-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.8rem 1.5rem;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .submit-button:hover {
+        background-color: #388E3C;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .submit-button:active {
+        transform: scale(0.98);
+    }
+
+    /* Nachrichtenbox */
+    .message-box {
+        margin-top: 1.5rem;
+        padding: 0;
+        min-height: 1.5rem;
+        font-weight: 500;
+    }
+
+    .message-box.success {
+        color: #388E3C;
+        background-color: #e8f5e9;
+        padding: 1rem;
+        border-radius: 4px;
+        border-left: 4px solid #4CAF50;
+    }
+
+    .message-box.error {
+        color: #d32f2f;
+        background-color: #ffebee;
+        padding: 1rem;
+        border-radius: 4px;
+        border-left: it solid #f44336;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.getElementById('hex_code');
+    const hexText = document.getElementById('hex_code_text');
+    const messageBox = document.getElementById('message');
+    const addColorForm = document.getElementById('addColorForm');
+
+    // Aktualisiere Hex-Text, wenn Farbe geändert wird
+    colorInput.addEventListener('input', function() {
+        hexText.textContent = this.value.toUpperCase();
+    });
+
+    // Initialen Wert setzen
+    hexText.textContent = colorInput.value.toUpperCase();
+
+    // Form-Submission
+    addColorForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        let formData = new FormData(this);
+
+        try {
+            messageBox.className = 'message-box';
+            messageBox.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Wird gespeichert...';
+
+            let response = await fetch('/decordetection/add_color/', {
+                method: 'POST',
+                body: formData
+            });
+
+            let result = await response.json();
+
+            if (response.ok) {
+                messageBox.className = 'message-box success';
+                messageBox.innerHTML = '<i class="fas fa-check-circle"></i> ' + result.message;
+
+                // Formular zurücksetzen
+                addColorForm.reset();
+                hexText.textContent = '#000000';
+
+                // Nach 2 Sekunden neu laden
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                messageBox.className = 'message-box error';
+                messageBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (result.message || 'Ein Fehler ist aufgetreten');
+            }
+        } catch (error) {
+            messageBox.className = 'message-box error';
+            messageBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> Verbindungsfehler, bitte erneut versuchen';
+        }
+    });
+});
+</script>
+{% endblock %}
