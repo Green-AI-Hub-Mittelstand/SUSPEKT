@@ -1,0 +1,1109 @@
+{% extends "base.html" %}
+
+{% block title %}Digitales Lager{% endblock %}
+
+{% block content %}
+<div class="app-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="header-image-container">
+            <img src="https://www.system180.com/wp-content/uploads/2021/06/System180_Made-In_Berlin_-scaled.jpg" alt="System180" class="header-image">
+            <div class="header-overlay">
+                <h1 class="header-title">Digitales Lager</h1>
+                <p class="header-subtitle">Verwaltung und Speicherung von erkannten System180-Komponenten</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <!-- Formular-Sektion -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-clipboard-list"></i> Komponentendetails
+            </div>
+
+            <form action="/confirm_results/" method="post" id="mainForm" class="order-form">
+                <div class="form-grid">
+                    <!-- Linke Spalte -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="order_id"><i class="fas fa-hashtag"></i> Vorgangsnummer</label>
+                            <input type="text" id="order_id" name="order_id" value="{{ generated_order_id }}" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="system180_order"><i class="fas fa-barcode"></i> Auftragsnummer System 180</label>
+                            <input type="text" id="system180_order" name="system180_order">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_email"><i class="fas fa-envelope"></i> Ansprechpartner (E-Mail)*</label>
+                            <input type="email" id="contact_email" name="contact_email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location"><i class="fas fa-map-marker-alt"></i> Location*</label>
+                            <input type="text" name="location" id="location" placeholder="Straße, Hausnummer, PLZ, Stadt, Land" autocomplete="off" required>
+                            <!-- Versteckte Felder für Geodaten -->
+                            <input type="hidden" id="latitude" name="latitude" value="">
+                            <input type="hidden" id="longitude" name="longitude" value="">
+                            <input type="hidden" id="formatted_address" name="formatted_address" value="">
+                            <div id="results" class="search-results"></div>
+                        </div>
+                    </div>
+
+                    <!-- Rechte Spalte -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="contact_phone"><i class="fas fa-phone"></i> Telefonnummer*</label>
+                            <input type="tel" id="contact_phone" name="contact_phone" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="order_type"><i class="fas fa-shopping-cart"></i> Erfassungsart*</label>
+                            <select id="order_type" name="order_type" required>
+                                <option value="">Bitte wählen</option>
+                                <option value="online">Online</option>
+                                <option value="vor_ort">Vor Ort</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="additional_info"><i class="fas fa-info-circle"></i> Zusätzliche Info</label>
+                            <textarea id="additional_info" name="additional_info"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Karte -->
+                <div class="map-container">
+                    <div id="map"></div>
+                </div>
+
+                <input type="hidden" id="image_results" name="image_results" value='{{ image_results | tojson | safe }}'>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-button">
+                        <i class="fas fa-save"></i> Daten in Neo4j speichern
+                    </button>
+                </div>
+                <input type="hidden" id="deleted_rows" name="deleted_rows" value="[]">
+            </form>
+        </div>
+
+        <!-- Tabellen-Sektion -->
+        <div class="table-section">
+            <div class="section-title">
+                <i class="fas fa-tags"></i> Erkannte Objekte
+            </div>
+
+            <div class="table-container">
+                <div class="table-controls">
+                    <div class="table-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="globalSearch" placeholder="Suche in allen Spalten..." class="global-search">
+                    </div>
+                </div>
+
+                <div class="responsive-table">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>ID <div class="filter-container"><input type="text" class="filter-input" data-column="0" placeholder="Filter..."></div></th>
+                                <th>Aktionen</th>
+                                <th>Klasse <div class="filter-container"><input type="text" class="filter-input" data-column="1" placeholder="Filter..."></div></th>
+                                <th>Genauigkeit <div class="filter-container"><input type="text" class="filter-input" data-column="2" placeholder="Filter..."></div></th>
+                                <th>Bild</th>
+                                <th>Farbe <div class="filter-container"><input type="text" class="filter-input" data-column="4" placeholder="Filter..."></div></th>
+                                <th>Zustand <div class="filter-container"><input type="text" class="filter-input" data-column="5" placeholder="Filter..."></div></th>
+                                <th>Wiederverwendbar</th>
+                                <th>Gewicht (g) <div class="filter-container"><input type="text" class="filter-input" data-column="7" placeholder="Filter..."></div></th>
+                                <th>Typ <div class="filter-container"><input type="text" class="filter-input" data-column="8" placeholder="Filter..."></div></th>
+                                <th>Maße (mm) <div class="filter-container"><input type="text" class="filter-input" data-column="9" placeholder="Filter..."></div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if image_results %}
+                                {% if image_results.items() is defined %}
+                                    {% for image, df in image_results.items() %}
+                                        {% for row in df %}
+                                            <tr data-row-id="{{ loop.index }}">
+                                                <td>{{ loop.index }}</td>
+                                                <td>
+                                                    <button type="button" class="delete-row-btn" data-row-id="{{ loop.index }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                                <td>{{ row.class }}</td>
+                                                <td>
+                                                    <div class="progress-container">
+                                                        <div class="progress-bar" style="width: {{ (row.confidence * 100) | round }}%"></div>
+                                                        <span class="progress-text">{{ (row.confidence * 100) | round }}%</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="crop-container">
+                                                        <img src="/static/{{ row.crop_path }}" class="crop-image" alt="Objekt Ausschnitt" onclick="openModal('/static/{{ row.crop_path }}')">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if row.farbe and row.farbe.hex_code %}
+                                                        <div class="color-info">
+                                                            <span class="color-sample" style="background-color: {{ row.farbe.hex_code }}"></span>
+                                                            {{ row.farbe.erkannte_farbe }}
+                                                        </div>
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if row.zustand == "unbeschädigt" %}
+                                                        <span class="condition-badge condition-good">{{ row.zustand }}</span>
+                                                    {% else %}
+                                                        <span class="condition-badge condition-damaged">{{ row.zustand }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="center-align">
+                                                    <div class="checkbox-wrapper">
+                                                        <input type="checkbox" id="reusable_{{ loop.index }}" name="reusable_{{ loop.index }}" value="true"
+                                                               {% if row.reusable %}checked{% endif %} class="custom-checkbox">
+                                                        <label for="reusable_{{ loop.index }}" class="checkbox-label"></label>
+                                                    </div>
+                                                </td>
+                                                <td>{{ row.gewicht }}</td>
+                                                <td>{{ row.typ }}</td>
+                                                <td>
+                                                    {% if row.breite and row.laenge %}
+                                                        {{ row.breite }} × {{ row.laenge }}
+                                                    {% elif row.laenge %}
+                                                        {{ row.laenge }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% for row in image_results %}
+                                        <tr data-row-id="{{ loop.index }}">
+                                            <td>{{ loop.index }}</td>
+                                            <td>
+                                                <button type="button" class="delete-row-btn" data-row-id="{{ loop.index }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                            <td>{{ row.class }}</td>
+                                            <td>
+                                                <div class="progress-container">
+                                                    <div class="progress-bar" style="width: {{ (row.confidence * 100) | round }}%"></div>
+                                                    <span class="progress-text">{{ (row.confidence * 100) | round }}%</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                    <div class="crop-container">
+                                                        <img src="/static/{{ row.crop_path }}" class="crop-image" alt="Objekt Ausschnitt" onclick="openModal('/static/{{ row.crop_path }}')">
+                                                    </div>
+                                            </td>
+                                            <td>
+                                                {% if row.farbe and row.farbe.hex_code %}
+                                                    <div class="color-info">
+                                                        <span class="color-sample" style="background-color: {{ row.farbe.hex_code }}"></span>
+                                                        {{ row.farbe.erkannte_farbe }}
+                                                    </div>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if row.zustand == "unbeschädigt" %}
+                                                    <span class="condition-badge condition-good">{{ row.zustand }}</span>
+                                                {% else %}
+                                                    <span class="condition-badge condition-damaged">{{ row.zustand }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="center-align">
+                                                <div class="checkbox-wrapper">
+                                                    <input type="checkbox" id="reusable_{{ loop.index }}" name="reusable_{{ loop.index }}" value="true"
+                                                           {% if row.reusable %}checked{% endif %} class="custom-checkbox">
+                                                    <label for="reusable_{{ loop.index }}" class="checkbox-label"></label>
+                                                </div>
+                                            </td>
+                                            <td>{{ row.gewicht }}</td>
+                                            <td>{{ row.typ }}</td>
+                                            <td>
+                                                {% if row.breite and row.laenge %}
+                                                    {{ row.breite }} × {{ row.laenge }}
+                                                {% elif row.laenge %}
+                                                    {{ row.laenge }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="11" class="no-data">❌ Keine Daten gefunden</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hauptcontainer Styling */
+    .app-container {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: #333;
+        background-color: #f5f7fa;
+    }
+
+    /* Header */
+    .header-section {
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+
+    .header-image-container {
+        position: relative;
+        height: 250px;
+        overflow: hidden;
+    }
+
+    .header-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .header-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0 1rem;
+    }
+
+    .header-title {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .header-subtitle {
+        color: rgba(255,255,255,0.9);
+        font-size: 1.2rem;
+        max-width: 600px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    }
+
+    /* Content Container */
+    .content-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1rem 3rem;
+    }
+
+    /* Abschnitte */
+    .section-title {
+        background: linear-gradient(135deg, #2196F3, #1565C0);
+        color: white;
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        border-radius: 6px 6px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-section, .table-section {
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    /* Formular */
+    .order-form {
+        padding: 1.5rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.3rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: #2196F3;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+        outline: none;
+    }
+
+    .form-group input[readonly] {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    /* Karte */
+    .map-container {
+        margin: 1.5rem 0;
+    }
+
+    #map {
+        height: 400px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    /* Buttons und Actions */
+    .form-actions {
+        text-align: right;
+        margin-top: 1.5rem;
+    }
+
+    .submit-button {
+        padding: 0.8rem 1.5rem;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: background-color 0.2s, transform 0.1s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .submit-button:hover {
+        background-color: #388E3C;
+    }
+
+    .submit-button:active {
+        transform: scale(0.98);
+    }
+
+    /* Tabelle */
+    .table-container {
+        padding: 1.5rem;
+    }
+
+    .table-controls {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+    }
+
+    .table-search {
+        display: flex;
+        align-items: center;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.5rem 0.75rem;
+        width: 300px;
+    }
+
+    .table-search i {
+        color: #666;
+        margin-right: 0.5rem;
+    }
+
+    .global-search {
+        border: none;
+        background: transparent;
+        width: 100%;
+        outline: none;
+    }
+
+    .responsive-table {
+        overflow-x: auto;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+        font-size: 0.95rem;
+    }
+
+    th, td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    th {
+        background-color: #f5f7fa;
+        font-weight: 600;
+        color: #333;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    td {
+        color: #444;
+    }
+
+    tbody tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .filter-container {
+        margin-top: 0.5rem;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        font-size: 0.85rem;
+    }
+
+    /* Fortschrittsbalken */
+    .progress-container {
+        width: 100%;
+        background-color: #e9ecef;
+        border-radius: 10px;
+        height: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background-color: #4CAF50;
+        border-radius: 10px;
+        transition: width 0.3s;
+    }
+
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    }
+
+    /* Bild Link */
+    .image-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.7rem;
+        background-color: #e3f2fd;
+        color: #1976D2;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: background-color 0.2s;
+    }
+
+    .image-link:hover {
+        background-color: #bbdefb;
+    }
+
+    /* Farbprobe */
+    .color-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .color-sample {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        display: inline-block;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* Zustand Badge */
+    .condition-badge {
+        display: inline-block;
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .condition-good {
+        background-color: #e8f5e9;
+        color: #388E3C;
+    }
+
+    .condition-damaged {
+        background-color: #ffebee;
+        color: #d32f2f;
+    }
+
+    /* Checkbox */
+    .center-align {
+        text-align: center;
+    }
+
+    .checkbox-wrapper {
+        display: inline-block;
+        position: relative;
+    }
+
+    .custom-checkbox {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: a;
+    }
+
+    .checkbox-label {
+        display: inline-block;
+        position: relative;
+        padding-left: 25px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .checkbox-label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #aaa;
+        background: #fff;
+        border-radius: 3px;
+        box-sizing: border-box;
+    }
+
+    .custom-checkbox:checked + .checkbox-label:before {
+        background: #4CAF50;
+        border-color: #4CAF50;
+    }
+
+    .custom-checkbox:checked + .checkbox-label:after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+
+    /* Keine Daten */
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+        font-style: italic;
+    }
+
+    /* Adresssuche */
+    .search-results {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 0 0 4px 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        width: 100%;
+        display: none;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .header-title {
+            font-size: 1.8rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+        }
+
+        .header-image-container {
+            height: 180px;
+        }
+
+        .form-actions {
+            text-align: center;
+        }
+
+        .submit-button {
+            width: 100%;
+        }
+    }
+    /* Löschbutton Styling */
+.delete-row-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-row-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* Animation für das Löschen */
+.row-deleting {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; height: 0; padding: 0; margin: 0; border: 0; }
+}
+
+/* Bestätigungsdialog */
+.confirmation-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.confirmation-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.confirmation-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.confirm-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.7rem 1.5rem;
+    cursor: pointer;
+}
+
+.cancel-btn {
+    background-color: #757575;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.7rem 1.5rem;
+    cursor: pointer;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet CSS direkt einbinden -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<!-- Leaflet JS direkt einbinden -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Tabellenfilterung - Spaltenfilter
+        document.querySelectorAll(".filter-input").forEach(function (input) {
+            input.addEventListener("keyup", function () {
+                let column = parseInt(this.getAttribute("data-column"));
+                let filterValue = this.value.toLowerCase();
+                filterTable(column, filterValue);
+            });
+        });
+
+        // Globaler Suchfilter
+        const globalSearch = document.getElementById("globalSearch");
+        if (globalSearch) {
+            globalSearch.addEventListener("keyup", function() {
+                const filterValue = this.value.toLowerCase();
+                const table = document.getElementById("dataTable");
+                const rows = table.getElementsByTagName("tr");
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName("td");
+                    let rowVisible = false;
+
+                    for (let j = 0; j < cells.length; j++) {
+                        if (cells[j]) {
+                            const cellText = cells[j].textContent.toLowerCase();
+                            if (cellText.includes(filterValue)) {
+                                rowVisible = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    rows[i].style.display = rowVisible ? "" : "none";
+                }
+            });
+        }
+        initRowDeletion();
+
+
+        // Geocoding-Funktionalität initialisieren
+        initGeocodingFeatures();
+
+        // Farbige Fortschrittsbalken anpassen
+        document.querySelectorAll('.progress-bar').forEach(bar => {
+            const value = parseFloat(bar.style.width);
+            if (value < 40) {
+                bar.style.backgroundColor = '#f44336'; // Rot für niedrige Werte
+            } else if (value < 70) {
+                bar.style.backgroundColor = '#ff9800'; // Orange für mittlere Werte
+            }
+            // Sonst bleibt es grün für hohe Werte
+        });
+    });
+
+    function filterTable(column, filterValue) {
+        const table = document.getElementById("dataTable");
+        const rows = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < rows.length; i++) {
+            const cell = rows[i].getElementsByTagName("td")[column];
+            if (cell) {
+                const cellText = cell.textContent.toLowerCase();
+                rows[i].style.display = cellText.includes(filterValue) ? "" : "none";
+            }
+        }
+    }
+
+    function initGeocodingFeatures() {
+        // Location Input und Results
+        const locationInput = document.getElementById('location');
+        const resultsDiv = document.getElementById('results');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const formattedAddressInput = document.getElementById('formatted_address');
+        const mainForm = document.getElementById('mainForm');
+
+        let map;
+        let marker;
+
+        // Initialisiere die Karte direkt
+        try {
+            map = L.map('map').setView([51.165691, 10.451526], 6); // Deutschlands Zentrum
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Marker für System 180 in Berlin setzen
+            const system180Location = [52.5016, 13.4220]; // Ungefähre Koordinaten für Berlin-Mitte
+            const system180Marker = L.marker(system180Location).addTo(map);
+            system180Marker.bindPopup("System 180 (Startpunkt)").openPopup();
+
+            console.log("Karte wurde initialisiert");
+        } catch (error) {
+            console.error("Fehler bei der Karteninitialisierung:", error);
+        }
+
+        // Adresssuche-Funktion
+        function searchAddress(query) {
+            const nominatimUrl = 'https://nominatim.openstreetmap.org/search';
+            const url = `${nominatimUrl}?format=json&q=${encodeURIComponent(query)}&limit=5`;
+
+            fetch(url, {
+                headers: {
+                    'Accept-Language': 'de,en'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('Fehler bei der Adresssuche:', error);
+                resultsDiv.innerHTML = '<p class="text-danger p-2">Fehler bei der Suche. Bitte versuchen Sie es erneut.</p>';
+                resultsDiv.style.display = 'block';
+            });
+        }
+
+        // Live-Suche während der Eingabe
+        let timeoutId;
+        locationInput.addEventListener('input', function() {
+            clearTimeout(timeoutId);
+
+            if (locationInput.value.length > 3) {
+                timeoutId = setTimeout(() => {
+                    searchAddress(locationInput.value);
+                }, 500);
+            } else {
+                resultsDiv.style.display = 'none';
+            }
+        });
+
+        // Ergebnisse anzeigen
+        function displayResults(results) {
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p class="p-2">Keine Ergebnisse gefunden.</p>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+
+            resultsDiv.innerHTML = '';
+
+            results.forEach(result => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'p-2 border-bottom address-result';
+                resultItem.innerHTML = `<strong>${result.display_name}</strong>`;
+
+                resultItem.addEventListener('click', function() {
+                    selectResult(result);
+                    locationInput.value = result.display_name;
+                    resultsDiv.style.display = 'none';
+                });
+
+                resultsDiv.appendChild(resultItem);
+            });
+
+            resultsDiv.style.display = 'block';
+        }
+
+        // Ergebnis auswählen und auf der Karte anzeigen
+        function selectResult(result) {
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+
+            // Geodaten in versteckten Feldern speichern
+            latitudeInput.value = lat;
+            longitudeInput.value = lon;
+            formattedAddressInput.value = result.display_name;
+
+            // Karte zentrieren
+            map.setView([lat, lon], 15);
+
+            // Marker setzen oder aktualisieren
+            if (marker) {
+                marker.setLatLng([lat, lon]);
+            } else {
+                marker = L.marker([lat, lon]).addTo(map);
+            }
+
+            marker.bindPopup(result.display_name).openPopup();
+
+            // Zeichne Linie zwischen System 180 und dem ausgewählten Standort
+            const system180Location = [52.5016, 13.4220]; // Berlin
+
+            // Entferne bestehende Linien
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.Polyline && !(layer instanceof L.Marker)) {
+                    map.removeLayer(layer);
+                }
+            });
+
+            // Zeichne neue Linie
+            const polyline = L.polyline([system180Location, [lat, lon]], {color: '#2196F3', weight: 3}).addTo(map);
+
+            // Karte so zoomen, dass beide Marker sichtbar sind
+            const bounds = L.latLngBounds(system180Location, [lat, lon]);
+            map.fitBounds(bounds, {padding: [50, 50]});
+        }
+
+        // Formularvalidierung
+        mainForm.addEventListener('submit', function(e) {
+            if (locationInput.value && !latitudeInput.value) {
+                e.preventDefault();
+                alert('Bitte wählen Sie eine genaue Adresse aus den Vorschlägen aus.');
+                searchAddress(locationInput.value);
+            }
+        });
+
+        // Klicken außerhalb der Ergebnisse schließt diese
+        document.addEventListener('click', function(e) {
+            if (e.target !== locationInput && e.target !== resultsDiv && !resultsDiv.contains(e.target)) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+    }
+
+function initRowDeletion() {
+    // Feld für gelöschte Zeilen IDs
+    const deletedRowsInput = document.getElementById('deleted_rows');
+    let deletedRows = JSON.parse(deletedRowsInput.value || '[]');
+
+    // Zugriff auf das versteckte image_results Feld
+    const imageResultsInput = document.getElementById('image_results');
+
+    // Bestätigungsdialog für das Löschen erstellen
+    const confirmationDialog = document.createElement('div');
+    confirmationDialog.className = 'confirmation-dialog';
+    confirmationDialog.style.display = 'none';
+
+    confirmationDialog.innerHTML = `
+        <div class="confirmation-content">
+            <h3>Zeile löschen</h3>
+            <p>Möchten Sie diese Komponente wirklich aus der Liste entfernen?</p>
+            <div class="confirmation-actions">
+                <button class="cancel-btn">Abbrechen</button>
+                <button class="confirm-btn">Löschen</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(confirmationDialog);
+
+    // Event-Handler für Löschbuttons
+    document.querySelectorAll('.delete-row-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const rowId = this.getAttribute('data-row-id');
+
+            // Bestätigungsdialog anzeigen
+            confirmationDialog.style.display = 'flex';
+
+            // Handler für Abbrechen-Button
+            confirmationDialog.querySelector('.cancel-btn').onclick = function() {
+                confirmationDialog.style.display = 'none';
+            };
+
+            // Handler für Bestätigen-Button
+            confirmationDialog.querySelector('.confirm-btn').onclick = function() {
+                // Zeile aus der Tabelle entfernen
+                const row = document.querySelector(`tr[data-row-id="${rowId}"]`);
+
+                // Zeilennummer zur Liste der gelöschten Zeilen hinzufügen
+                const rowIdNum = parseInt(rowId);
+                deletedRows.push(rowIdNum);
+                deletedRowsInput.value = JSON.stringify(deletedRows);
+
+                // Daten im image_results aktualisieren - diese Zeile direkt entfernen
+                try {
+                    if (imageResultsInput) {
+                        let imageResults = JSON.parse(imageResultsInput.value);
+
+                                // Bestimme, ob es ein Dictionary (Objekt) von Arrays oder ein einzelnes Array ist
+                        if (Array.isArray(imageResults)) {
+                            // Es ist ein einfaches Array - entferne die Zeile mit Index rowIdNum-1
+                            imageResults = imageResults.filter((_, index) => index !== rowIdNum-1);
+                        } else {
+                            // Es ist ein Dictionary (Objekt) von Arrays
+                            // Für jedes Bild die Zeile entfernen
+                            for (const key in imageResults) {
+                                if (Array.isArray(imageResults[key])) {
+                                    // Filtere die Zeile heraus (1-basierte ID zu 0-basiertem Index)
+                                    imageResults[key] = imageResults[key].filter((_, index) => index !== rowIdNum-1);
+                                }
+                            }
+                        }
+
+                        // Aktualisiertes image_results zurückschreiben
+                        imageResultsInput.value = JSON.stringify(imageResults);
+                        console.log(`Zeile ${rowIdNum} erfolgreich aus image_results entfernt`);
+                    }
+                } catch (error) {
+                    console.error("Fehler beim Aktualisieren der image_results:", error);
+                }
+
+                // Animation beim Löschen
+                row.classList.add('row-deleting');
+
+                // Nach der Animation die Zeile entfernen
+                row.addEventListener('animationend', function() {
+                    row.remove();
+
+                    // Überprüfen, ob die Tabelle leer ist
+                    const tbody = document.querySelector('#dataTable tbody');
+                    if (tbody.children.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="11" class="no-data">❌ Keine Daten gefunden</td></tr>';
+                    }
+                });
+
+                // Dialog schließen
+                confirmationDialog.style.display = 'none';
+            };
+        });
+    });
+
+    // Klick außerhalb des Dialogs schließt ihn
+    confirmationDialog.addEventListener('click', function(e) {
+        if (e.target === confirmationDialog) {
+            confirmationDialog.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

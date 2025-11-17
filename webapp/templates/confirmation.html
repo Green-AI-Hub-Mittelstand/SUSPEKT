@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Bestätigung der Datenbankaufnahme{% endblock %}
+
+{% block content %}
+<div class="confirmation-container">
+    <div class="confirmation-card">
+        <div class="card-header {% if success %}success{% else %}error{% endif %}">
+            <div class="status-icon">
+                {% if success %}
+                    <i class="fas fa-check-circle"></i>
+                {% else %}
+                    <i class="fas fa-exclamation-circle"></i>
+                {% endif %}
+            </div>
+            <h1 class="confirmation-title">Bestätigung</h1>
+        </div>
+
+        <div class="card-body">
+            <div class="message-container {% if success %}success{% else %}error{% endif %}">
+                <p class="message-text">{{ message }}</p>
+            </div>
+
+            <div class="details-container">
+                {% if success %}
+                    <div class="info-box">
+                        <div class="info-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <p class="info-text">
+                            Die System180-Komponenten wurden erfolgreich in die Datenbank aufgenommen und stehen nun für die weitere Verarbeitung zur Verfügung.
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="info-box">
+                        <div class="info-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <p class="info-text">
+                            Überprüfen Sie die angegebenen Daten und versuchen Sie es erneut. Bei wiederholten Problemen wenden Sie sich bitte an den Support.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="action-buttons">
+                <a href="/" class="primary-button">
+                    <i class="fas fa-home"></i> Zurück zur Startseite
+                </a>
+
+                {% if success %}
+                    <a href="/inventory" class="secondary-button">
+                        <i class="fas fa-warehouse"></i> Zum digitalen Lager
+                    </a>
+                {% else %}
+                    <a href="javascript:history.back()" class="secondary-button">
+                        <i class="fas fa-arrow-left"></i> Zurück zum Formular
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hauptcontainer */
+    .confirmation-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 200px);
+        padding: 2rem 1rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Card Design */
+    .confirmation-card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 700px;
+        overflow: hidden;
+    }
+
+    /* Card Header */
+    .card-header {
+        padding: 2rem;
+        position: relative;
+        text-align: center;
+        color: white;
+    }
+
+    .card-header.success {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    }
+
+    .card-header.error {
+        background: linear-gradient(135deg, #F44336, #C62828);
+    }
+
+    .status-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+    }
+
+    .confirmation-title {
+        font-size: 2rem;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    /* Card Body */
+    .card-body {
+        padding: 2rem;
+    }
+
+    /* Message */
+    .message-container {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .message-container.success {
+        background-color: #E8F5E9;
+        border-left: 5px solid #4CAF50;
+    }
+
+    .message-container.error {
+        background-color: #FFEBEE;
+        border-left: 5px solid #F44336;
+    }
+
+    .message-text {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    /* Info Box */
+    .details-container {
+        margin-bottom: 2rem;
+    }
+
+    .info-box {
+        background-color: #F5F7FA;
+        border-radius: 6px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .info-icon {
+        color: #2196F3;
+        font-size: 1.5rem;
+        margin-top: 0.2rem;
+    }
+
+    .info-text {
+        margin: 0;
+        color: #555;
+        line-height: 1.5;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .primary-button, .secondary-button {
+        padding: 0.8rem 1.5rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .primary-button {
+        background-color: #2196F3;
+        color: white;
+        box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
+    }
+
+    .primary-button:hover {
+        background-color: #1976D2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+    }
+
+    .secondary-button {
+        background-color: #ECEFF1;
+        color: #455A64;
+    }
+
+    .secondary-button:hover {
+        background-color: #CFD8DC;
+        transform: translateY(-2px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 600px) {
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .primary-button, .secondary-button {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+        }
+
+        .confirmation-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

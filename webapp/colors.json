@@ -1,0 +1,142 @@
+{
+    "Azurblau": {
+        "name": "Azurblau",
+        "hex_code": "#225f78",
+        "ncs_code": "4030-B",
+        "rgb_values": [
+            34,
+            95,
+            120
+        ]
+    },
+    "Koralle": {
+        "name": "Koralle",
+        "hex_code": "#cb555d",
+        "ncs_code": "0570-Y90R",
+        "rgb_values": [
+            203,
+            85,
+            93
+        ]
+    },
+    "Wei\u00df": {
+        "name": "Wei\u00df",
+        "hex_code": "#f1f0ea",
+        "ncs_code": "0500-N",
+        "rgb_values": [
+            241,
+            240,
+            234
+        ]
+    },
+    "Wolkenblau": {
+        "name": "Wolkenblau",
+        "hex_code": "#c5d7db",
+        "ncs_code": "1010-B10G",
+        "rgb_values": [
+            197,
+            215,
+            219
+        ]
+    },
+    "Wei\u00dfgr\u00fcn": {
+        "name": "Wei\u00dfgr\u00fcn",
+        "hex_code": "#b7cca9",
+        "ncs_code": "2030-G",
+        "rgb_values": [
+            183,
+            204,
+            169
+        ]
+    },
+    "Lichtgrau": {
+        "name": "Lichtgrau",
+        "hex_code": "#c8c8c7",
+        "ncs_code": "2000-N",
+        "rgb_values": [
+            200,
+            200,
+            199
+        ]
+    },
+    "Sandgrau": {
+        "name": "Sandgrau",
+        "hex_code": "#c6c2c0",
+        "ncs_code": "4005-Y20R",
+        "rgb_values": [
+            198,
+            194,
+            192
+        ]
+    },
+    "Flieder": {
+        "name": "Flieder",
+        "hex_code": "#b699bd",
+        "ncs_code": "2030-R50B",
+        "rgb_values": [
+            182,
+            153,
+            189
+        ]
+    },
+    "Piniengr\u00fcn": {
+        "name": "Piniengr\u00fcn",
+        "hex_code": "#8a9682",
+        "ncs_code": "S4010-G10Y",
+        "rgb_values": [
+            138,
+            150,
+            130
+        ]
+    },
+    "Schwarz": {
+        "name": "Schwarz",
+        "hex_code": "#2b2b2c",
+        "ncs_code": "9000-N",
+        "rgb_values": [
+            43,
+            43,
+            44
+        ]
+    },
+    "Graphit": {
+        "name": "Graphit",
+        "hex_code": "#4c4a44",
+        "ncs_code": "S-7502-R",
+        "rgb_values": [
+            76,
+            74,
+            68
+        ]
+    },
+    "Waldgr\u00fcn": {
+        "name": "Waldgr\u00fcn",
+        "hex_code": "#315442",
+        "ncs_code": "7020-G10Y",
+        "rgb_values": [
+            49,
+            84,
+            66
+        ]
+    },
+    "Sonnengelb": {
+        "name": "Sonnengelb",
+        "hex_code": "#f6b600",
+        "ncs_code": "0580-Y10R",
+        "rgb_values": [
+            246,
+            182,
+            0
+        ]
+    },
+    "Traube": {
+        "name": "Traube",
+        "hex_code": "#6c2551",
+        "ncs_code": "6030-R40",
+        "rgb_values": [
+            108,
+            37,
+            81
+        ]
+    }
+}
