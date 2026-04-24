@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}Zustand Erkennung{% endblock %}
+
+{% block content %}
+<div class="upload-page-container">
+    <h1>Beschädigung Melden</h1>
+
+    {% if img_path %}
+        <div class="image-display">
+            <h2>Ausgewähltes Teil: <span id = "part-type">{{part_type}}</span></h2>
+            <h2>Zustand: <span id = "part-condition">Unknown</span></h2>
+            <img src="{{ img_path }}" alt="Hochgeladenes Bild" class="uploaded-image">
+        </div>
+    {% endif %} 
+    <input type="hidden" id="part-type-hidden" value="{{ part_type }}">
+    <input type="hidden" id="part-id-hidden" value="{{ part_id }}">
+    <form id="upload-form" method="post" enctype="multipart/form-data">
+        <input type="file" name="files" accept="image/*" required
+               style="display: none" id="file-input">
+
+        <div class="image-preview-grid">
+            <div class="image-card" data-card-index="{{ 1 }}">
+                <div class="image-preview">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="card-content">
+                    <p class="file-name">Bild hochladen</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button type="button" class="btn btn-primary" id="select-files-btn">
+                <i class="fas fa-upload"></i>
+                Bild auswählen
+            </button>
+
+            <button type="button" class="btn btn-primary" id="open-camera-btn">
+                <i class="fas fa-camera"></i>
+                Kamera öffnen
+            </button>
+
+            <button type="button" id="detect-condition-btn" class="btn btn-secondary" disabled>
+                <i class="fas fa-search"></i>
+                Zustand Erkennen
+            </button>
+
+            <button type="button" id="confirm-condition-btn" class="btn btn-success" disabled>
+                <i class="fas fa-circle-check"></i>
+                Bestätigen
+            </button>
+
+            <button type="button" id="cancel-btn" class="btn btn-secondary">
+                <i class="fas fa-times"></i>
+                Abbrechen
+            </button>
+        </div>
+    </form>
+
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <video id="camera-stream" autoplay playsinline></video>
+            <canvas id="camera-canvas" style="display: none;"></canvas>
+            <div class="camera-controls">
+                <div class="image-counter">
+                    Aufgenommene Bilder: <span id="image-count">0</span>/1
+                </div>
+                <div class="camera-buttons">
+                    <button id="capture-btn" class="btn btn-primary">
+                        <i class="fas fa-camera"></i>
+                        Foto aufnehmen
+                    </button>
+                    <button id="switch-camera-btn" class="btn btn-secondary">
+                        <i class="fas fa-sync"></i>
+                        Kamera wechseln
+                    </button>
+                    <button id="modal-analyze-btn" class="btn btn-success" disabled>
+                        <i class="fas fa-search"></i>
+                        Zustand Erkennen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Bilder werden verarbeitet...</p>
+    </div>
+</div>
+
+<style>
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: relative;
+    margin: 10% auto;
+    width: 80%;
+    max-width: 800px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.close-modal {
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#camera-stream {
+    width: 100%;
+    max-height: 60vh;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
+
+.camera-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.camera-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.image-counter {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 8px 15px;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.image-display {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.uploaded-image {
+    max-width: 100%;
+    max-height: 300px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 5px;
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+    const fileInput = document.getElementById('file-input');
+    const detectConditionBtn = document.getElementById('detect-condition-btn');
+    const confirmConditionBtn = document.getElementById('confirm-condition-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const uploadForm = document.getElementById('upload-form');
+    const loading = document.getElementById('loading');
+    const selectFilesBtn = document.getElementById('select-files-btn');
+    const openCameraBtn = document.getElementById('open-camera-btn');
+    const cameraModal = document.getElementById('camera-modal');
+    const closeModal = document.querySelector('.close-modal');
+    const video = document.getElementById('camera-stream');
+    const canvas = document.getElementById('camera-canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const switchCameraBtn = document.getElementById('switch-camera-btn');
+    const modalAnalyzeBtn = document.getElementById('modal-analyze-btn');
+    const imageCountDisplay = document.getElementById('image-count');
+
+    let currentStream = null;
+    let facingMode = 'environment'; // Start with back camera
+
+    // Event Listener für die Cards
+    document.querySelectorAll('.image-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+        if (!this.querySelector('img')) {
+            fileInput.click();
+        }
+        });
+    });
+
+    selectFilesBtn.addEventListener('click', () => fileInput.click());
+
+    // Global variable to store all files
+    let storedFiles = [];
+
+    fileInput.addEventListener('change', function(e) {
+
+        const newFile = this.files[0]; // Only take the first file
+
+        if (!newFile) return;
+
+        // Remove any previously uploaded file
+        storedFiles = [newFile];
+
+        // Update file input with only one file
+        const dtTransfer = new DataTransfer();
+        dtTransfer.items.add(newFile);
+        fileInput.files = dtTransfer.files;
+
+        updatePreviewCards(storedFiles);
+        updateImageCount();
+    });
+
+    detectConditionBtn.addEventListener('click', async function() {
+    if (fileInput.files.length === 0) {
+        alert("Bitte laden Sie ein Bild hoch!");
+        return;
+    }
+    const partType = document.getElementById("part-type-hidden").value;   
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]); // Get the uploaded file
+    formData.append('part_type', partType);
+
+    try {
+        // Send the image to the backend for processing
+        const response = await fetch('/api/detect_condition', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            let span = document.getElementById("part-condition");
+            span.textContent = result.classification;
+            confirmConditionBtn.disabled = false
+        } else {
+            alert(`Fehler: ${result.detail}`);
+        }
+    } catch (error) {
+        console.error("Fehler beim Analysieren:", error);
+        alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+    }
+});
+
+    // Camera functionality
+    openCameraBtn.addEventListener('click', openCamera);
+    closeModal.addEventListener('click', closeCamera);
+    captureBtn.addEventListener('click', captureImage);
+    switchCameraBtn.addEventListener('click', switchCamera);
+
+    async function openCamera() {
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: facingMode },
+                audio: false
+            });
+            video.srcObject = currentStream;
+            cameraModal.style.display = 'block';
+            updateImageCount(); // Update counter when opening camera
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            alert('Kamera konnte nicht geöffnet werden. Bitte überprüfen Sie die Berechtigungen.');
+        }
+    }
+
+    function closeCamera() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+        cameraModal.style.display = 'none';
+    }
+
+    async function switchCamera() {
+        facingMode = facingMode === 'environment' ? 'user' : 'environment';
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+        await openCamera();
+    }
+
+    function captureImage() {
+        if (fileInput.files.length >= 1) {
+            alert('Maximale Anzahl von einem Bild erreicht!');
+            return;
+        }
+
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            addImageToFileInput(file);
+            updateImageCount();
+        }, 'image/jpeg');
+    }
+
+    function addImageToFileInput(newFile) {
+        const currentFiles = Array.from(fileInput.files || []);
+        if (currentFiles.length >= 1) {
+            alert('Maximale Anzahl von einem Bild erreicht!');
+            return;
+        }
+
+        const dtTransfer = new DataTransfer();
+        currentFiles.forEach(file => dtTransfer.items.add(file));
+        dtTransfer.items.add(newFile);
+        fileInput.files = dtTransfer.files;
+
+        updatePreviewCards(Array.from(fileInput.files));
+        detectConditionBtn.disabled = false;
+    }
+
+    // Update image counter and analyze button states
+    function updateImageCount() {
+        const currentCount = fileInput.files ? fileInput.files.length : 0;
+        imageCountDisplay.textContent = currentCount;
+
+        // Enable/disable both analyze buttons based on image count
+        const hasImages = currentCount > 0;
+        detectConditionBtn.disabled = !hasImages;
+        modalAnalyzeBtn.disabled = !hasImages;
+
+        // Update max images warning
+        if (currentCount >= 1) {
+            captureBtn.disabled = true;
+            captureBtn.title = 'Maximale Anzahl von Bildern erreicht';
+        } else {
+            captureBtn.disabled = false;
+            captureBtn.title = '';
+        }
+    }
+
+    // Event listener for modal analyze button
+    modalAnalyzeBtn.addEventListener('click', async function() {
+    if (fileInput.files.length === 0) {
+        alert("Bitte laden Sie ein Bild hoch!");
+        return;
+    }
+
+    const partType = document.getElementById("part-type-hidden").value;  
+    console.log(partType)
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]); // Get the uploaded file
+    formData.append('part_type', partType);
+
+    try {
+        // Send the image to the backend for processing
+        const response = await fetch('/api/detect_condition', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            let span = document.getElementById("part-condition");
+            span.textContent = result.classification;
+            confirmConditionBtn.disabled = false
+ 
+        } else {
+            alert(`Fehler: ${result.detail}`);
+        }
+    } catch (error) {
+        console.error("Fehler beim Analysieren:", error);
+        alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+    }
+});
+
+    function updatePreviewCards(files) {
+        const cards = document.querySelectorAll('.image-card');
+
+        cards.forEach((card, index) => {
+            if (index < files.length) {
+                const file = files[index];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    card.innerHTML = `
+                        <div class="image-preview">
+                            <span class="remove-image" data-filename="${file.name}">×</span>
+                            <img src="${e.target.result}" alt="Vorschau">
+                        </div>
+                        <div class="card-content">
+                            <p class="file-name">${file.name}</p>
+                        </div>
+                    `;
+
+                    // Add click event listener for the remove button
+                    const removeBtn = card.querySelector('.remove-image');
+                    if (removeBtn) {
+                        removeBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            removeImage(this.dataset.filename);
+                        });
+                    }
+                };
+
+                reader.readAsDataURL(file);
+            } else {
+                card.innerHTML = `
+                    <div class="image-preview">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <div class="card-content">
+                        <p class="file-name">Bild hochladen</p>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function removeImage(filename) {
+        // Remove from stored files
+        storedFiles = storedFiles.filter(file => file.name !== filename);
+
+        // Update file input
+        const dtTransfer = new DataTransfer();
+        storedFiles.forEach(file => dtTransfer.items.add(file));
+        fileInput.files = dtTransfer.files;
+
+        updatePreviewCards(storedFiles);
+        updateImageCount();
+    }
+
+
+    confirmConditionBtn.addEventListener('click', function() {
+    // Get the stored last page URL
+    const partId = document.getElementById("part-id-hidden").value;
+    console.log(partId)
+    const partCondition = document.getElementById("part-condition").textContent;
+    console.log(partCondition)
+    sessionStorage.setItem(partId, partCondition)
+
+    window.history.go(-1);
+    
+});
+
+    cancelBtn.addEventListener('click', function() {
+        // Get the stored last page URL
+        
+        window.history.go(-1);
+        
+    });
+</script>
+{% endblock %}

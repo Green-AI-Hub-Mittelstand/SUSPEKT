@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">YOLO Objekterkennung – Video Upload & Live Prediction</h2>
+
+    <div class="row">
+        <!-- Video Upload Section -->
+        <div class="col-md-6">
+            <form id="upload-form" enctype="multipart/form-data" class="mb-3">
+                <div class="input-group">
+                    <input type="file" id="video-file" name="file" accept="video/mp4, video/quicktime" class="form-control" required>
+                    <button type="submit" class="btn btn-primary">Hochladen</button>
+                </div>
+            </form>
+
+            <div id="upload-result" class="text-center" style="display: none;">
+                <h5>Hochgeladenes Video:</h5>
+                <video id="uploaded-video" class="border rounded" controls></video>
+                <button id="analyze-button" class="btn btn-success mt-2">Live-Analyse starten</button>
+            </div>
+        </div>
+
+        <!-- Live Prediction Stream -->
+        <div class="col-md-6">
+            <div id="live-stream-container" class="text-center" style="display: none;">
+                <h5>Live Vorhersage:</h5>
+                <img id="live-stream" class="border rounded img-fluid" alt="Live Object Detection Stream">
+                <div class="mt-3">
+                    <h5>Erkannte Objekte:</h5>
+                    <ul id="prediction-list" class="list-group"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="processing-message" class="text-center mt-3" style="display: none;">
+        <p class="text-warning">Das Video wird verarbeitet... Bitte warten.</p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let uploadedVideoId = null;
+    let uploadedFileExtension = null;
+
+    document.getElementById("upload-form").addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        let formData = new FormData();
+        let fileInput = document.getElementById("video-file");
+        let file = fileInput.files[0];
+        formData.append("file", file);
+
+        uploadedFileExtension = file.name.split('.').pop().toLowerCase();
+
+        document.getElementById("processing-message").style.display = "none";
+        document.getElementById("live-stream-container").style.display = "none";
+
+        let response = await fetch("/video/upload/", {
+            method: "POST",
+            body: formData
+        });
+
+        if (response.ok) {
+            let data = await response.json();
+            uploadedVideoId = data.video_id;
+            document.getElementById("uploaded-video").src = data.uploaded_video_url;
+            document.getElementById("uploaded-video").style.width = "100%";
+            document.getElementById("uploaded-video").style.maxHeight = "300px";
+            document.getElementById("upload-result").style.display = "block";
+        } else {
+            alert("Fehler beim Hochladen des Videos!");
+        }
+    });
+
+    document.getElementById("analyze-button").addEventListener("click", function() {
+        if (!uploadedVideoId) {
+            alert("Bitte erst ein Video hochladen!");
+            return;
+        }
+
+        document.getElementById("live-stream-container").style.display = "block";
+
+        let streamUrl = `/video/stream/${uploadedVideoId}/${uploadedFileExtension}`;
+        document.getElementById("live-stream").src = streamUrl;
+        document.getElementById("live-stream").style.width = "100%";
+        document.getElementById("live-stream").style.maxHeight = "300px";
+
+        fetchPredictions(streamUrl);
+    });
+
+    function fetchPredictions(url) {
+        fetch(url)
+            .then(response => {
+                const reader = response.body.getReader();
+                function read() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            return;
+                        }
+                        let text = new TextDecoder("utf-8").decode(value);
+                        updatePredictionList(text);
+                        return read();
+                    });
+                }
+                return read();
+            })
+            .catch(error => console.error("Fehler beim Abrufen der Vorhersagen:", error));
+    }
+
+    function updatePredictionList(predictionData) {
+        let list = document.getElementById("prediction-list");
+        list.innerHTML = "";
+
+        try {
+            let jsonData = JSON.parse(predictionData);
+            jsonData.predictions.forEach(pred => {
+                let listItem = document.createElement("li");
+                listItem.className = "list-group-item";
+                listItem.textContent = `${pred.class} - Wahrscheinlichkeit: ${(pred.confidence * 100).toFixed(2)}%`;
+                list.appendChild(listItem);
+            });
+        } catch (error) {
+            console.error("Fehler beim Verarbeiten der Vorhersagen:", error);
+        }
+    }
+</script>
+{% endblock %}

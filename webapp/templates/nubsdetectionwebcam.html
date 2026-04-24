@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}YOLO Webcam Detection{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-8">YOLO Webcam Detection</h1>
+
+    <!-- Camera Selection -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold mb-4">Select Camera</h2>
+        <select id="cameraSelect" class="w-full max-w-xs p-2 border rounded">
+            <option value="">Choose a camera...</option>
+            {% for id, name in available_cameras.items() %}
+            <option value="{{ id }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Video Feed -->
+        <div class="flex-1">
+            <div id="videoContainer" class="hidden">
+                <div class="video-container relative">
+                    <img id="videoFeed" src="" class="w-full h-auto max-w-2xl mx-auto rounded shadow-lg" alt="Video Feed">
+                    <div id="pattern" class="absolute top-4 left-4 bg-black bg-opacity-50 text-white p-2 rounded text-xl font-bold"></div>
+                </div>
+            </div>
+            <div id="noCamera" class="text-center p-8 bg-gray-100 rounded">
+                Please select a camera to start the detection
+            </div>
+        </div>
+
+        <!-- Detections -->
+        <div class="flex-1">
+            <div class="detections-container bg-white p-4 rounded shadow">
+                <h2 class="text-2xl font-bold mb-4">Detections:</h2>
+                <div id="detections" class="font-mono text-sm"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let updateInterval;
+
+function startVideoFeed(cameraId) {
+    document.getElementById('videoFeed').src = `{{ url_for('video_feed') }}`;
+    document.getElementById('videoContainer').classList.remove('hidden');
+    document.getElementById('noCamera').classList.add('hidden');
+    startUpdates();
+}
+
+function stopVideoFeed() {
+    document.getElementById('videoFeed').src = '';
+    document.getElementById('videoContainer').classList.add('hidden');
+    document.getElementById('noCamera').classList.remove('hidden');
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+}
+
+function startUpdates() {
+    if (updateInterval) {
+        clearInterval(updateInterval);
+    }
+
+    updateInterval = setInterval(() => {
+        // Update detections
+        fetch('{{ url_for("get_detections") }}')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('detections').innerHTML =
+                    '<pre class="whitespace-pre-wrap">' + JSON.stringify(data, null, 2) + '</pre>';
+            })
+            .catch(console.error);
+
+        // Update pattern
+        fetch('{{ url_for("get_pattern") }}')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('pattern').innerText = data.pattern;
+            })
+            .catch(console.error);
+    }, 1000);
+}
+
+document.getElementById('cameraSelect').addEventListener('change', function(e) {
+    const cameraId = parseInt(e.target.value);
+    if (cameraId !== '') {
+        fetch('{{ url_for("select_camera") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ camera_id: cameraId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                startVideoFeed(cameraId);
+            } else {
+                alert('Failed to initialize camera');
+                stopVideoFeed();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error initializing camera');
+            stopVideoFeed();
+        });
+    } else {
+        stopVideoFeed();
+    }
+});
+</script>
+{% endblock %}

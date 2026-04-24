@@ -1,0 +1,388 @@
+<nav class="main-navigation">
+    <div class="nav-container">
+        <div class="logo-container">
+            <a href="/" class="logo-link">
+                <img src="/static/logosystem180.png" alt="System180 Logo" class="logo-image">
+            </a>
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Menü öffnen">
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+            </button>
+        </div>
+
+        <div class="nav-content" id="nav-content">
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="/" class="nav-link active">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/video" class="nav-link">
+                        <i class="fas fa-video"></i>
+                        <span>Video</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/inventory" class="nav-link">
+                        <i class="fas fa-warehouse"></i>
+                        <span>Digitales Lager</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/training" class="nav-link">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Training</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/resource" class="nav-link">
+                        <i class="fas fa-recycle"></i>
+                        <span>Ressourceneffizienz</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-user-actions">
+                {% if request.session.get('user') == 'admin' %}
+                    <a href="/decordetection/manage_colors" class="action-button">
+                        <i class="fas fa-paintbrush"> </i>  Verwalten
+                    </a>
+
+                    <div class="user-profile">
+                        <a href="#" class="logout-button">
+                        <i class="fa-solid fa-user-tie"></i>
+                        </a>
+
+                        <a href="/logout" class="logout-button">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="/login" class="login-link">Login</a>
+
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* Hauptnavigation */
+.main-navigation {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    position: relative;
+    height: 80px;
+}
+
+/* Logo-Bereich */
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    width: 100%;
+}
+
+.logo-link {
+    display: block;
+}
+
+.logo-image {
+    height: 70px;
+    width: auto;
+}
+
+/* Mobile Toggle */
+.mobile-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 21px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.toggle-bar {
+    width: 100%;
+    height: 3px;
+    background-color: #333;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Navigations-Inhalte */
+.nav-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+/* Navigations-Links */
+.nav-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    margin: 0 0.1rem;
+    position: relative;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 1.2rem 0.7rem;
+    color: #444;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    position: relative;
+    white-space: nowrap;
+}
+
+.nav-link i {
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.nav-link:hover {
+    color: #2196F3;
+}
+
+.nav-link.active {
+    color: #2196F3;
+}
+
+.nav-link.active:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #2196F3;
+}
+
+/* Benutzeraktionen */
+.nav-user-actions {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.scan-button {
+    background-color: #e3f2fd;
+    color: #1976D2;
+    margin-right: 1rem;
+}
+
+.scan-button:hover {
+    background-color: #bbdefb;
+}
+
+.scan-button i {
+    margin-right: 0.4rem;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 0.7rem;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.logout-button {
+    color: #666;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.logout-button:hover {
+    color: #f44336;
+}
+
+.logout-button i {
+    margin-right: 0.4rem;
+}
+
+.login-link {
+    color: #444;
+    text-decoration: none;
+    margin-right: 1rem;
+    transition: color 0.2s;
+    border: 1px solid #e0e0e0;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.login-link:hover {
+    color: #2196F3;
+    border-color: #2196F3;
+    background-color: #f5f5f5;
+}
+
+.register-button {
+    background-color: #2196F3;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
+}
+
+.register-button:hover {
+    background-color: #1976D2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .nav-container {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+    }
+
+    .mobile-toggle {
+        display: flex;
+    }
+
+    .nav-content {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .nav-content.show {
+        max-height: 500px;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .nav-link {
+        padding: 0.8rem 0;
+        width: 100%;
+    }
+
+    .nav-link.active:after {
+        display: none;
+    }
+
+    .nav-user-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        padding: 1rem 0;
+    }
+
+    .action-button {
+        margin: 0.5rem 0;
+    }
+
+    .scan-button {
+        margin-right: 0;
+    }
+
+    .user-profile {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .login-link, .register-button {
+        margin: 0.5rem 0;
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileToggle = document.getElementById('mobile-toggle');
+    const navContent = document.getElementById('nav-content');
+
+    if (mobileToggle && navContent) {
+        mobileToggle.addEventListener('click', function() {
+            navContent.classList.toggle('show');
+        });
+    }
+
+    // Aktive Seite markieren
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    navLinks.forEach(link => {
+        // Entfernt die 'active' Klasse von allen Links
+        link.classList.remove('active');
+
+        // Holt den Pfad des Links
+        const linkPath = link.getAttribute('href');
+
+        // Setzt den Home-Link als aktiv wenn wir auf der Startseite sind
+        if (currentPath === '/' && linkPath === '/') {
+            link.classList.add('active');
+        }
+        // Für andere Seiten prüft, ob der Linkpfad im aktuellen Pfad enthalten ist
+        else if (currentPath !== '/' && linkPath !== '/' && currentPath.includes(linkPath)) {
+            link.classList.add('active');
+        }
+    });
+});
+</script>

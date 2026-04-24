@@ -1,12 +1,6 @@
 .idea
 .venv
-system180-env
-*.egg-info
-*.db
-*.sqlite3
-
-data
-static/detected_images
-__pycache__/
-uploads
-demonstrator/roboflow_data/*
+object_tracking
+GAIH_Kurzvorstellung_System180.pptx
+Green AI im Dialog_System180.pptx
+.bash_history

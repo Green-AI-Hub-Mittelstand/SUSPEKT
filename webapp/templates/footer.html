@@ -1,0 +1,198 @@
+<footer class="site-footer">
+    <div class="footer-container">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <img src="/static/logosystem180.png" alt="System180 Logo" class="footer-logo">
+                <p class="tagline">Made in Berlin</p>
+            </div>
+
+            <div class="footer-links">
+                <div class="footer-links-group">
+                    <h3>Unternehmen</h3>
+                    <a href="#">Über uns</a>
+                    <a href="#">Kontakt</a>
+                    <a href="#">Karriere</a>
+                </div>
+
+                <div class="footer-links-group">
+                    <h3>Produkte</h3>
+                    <a href="#">Möbelsysteme</a>
+                    <a href="#">Raumsysteme</a>
+                    <a href="#">Konstruktionen</a>
+                </div>
+
+                <div class="footer-links-group">
+                    <h3>Service</h3>
+                    <a href="#">Digitales Lager</a>
+                    <a href="#">Ressourceneffizienz</a>
+                    <a href="#">Training</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="copyright">
+                © 2025 System180. Alle Rechte vorbehalten.
+            </div>
+            <div class="secondary-links">
+                <a href="#">Datenschutz</a>
+                <span class="separator">|</span>
+                <a href="#">Impressum</a>
+                <span class="separator">|</span>
+                <a href="#">AGB</a>
+            </div>
+            <div class="powered-by">
+                Powered by Green AI Hub Mittelstand
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    .site-footer {
+        background-color: #263238;
+        color: #e0e0e0;
+        padding: 3rem 0 1.5rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .footer-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .footer-main {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2.5rem;
+        justify-content: space-between;
+        margin-bottom: 3rem;
+    }
+
+    .footer-brand {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .footer-logo {
+        height: 50px;
+        width: auto;
+        filter: brightness(0) invert(1);
+        margin-bottom: 0.75rem;
+    }
+
+    .tagline {
+        font-size: 0.9rem;
+        margin: 0;
+        opacity: 0.8;
+    }
+
+    .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 3rem;
+    }
+
+    .footer-links-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 160px;
+    }
+
+    .footer-links-group h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 1rem;
+        color: #90CAF9;
+    }
+
+    .footer-links-group a {
+        color: #e0e0e0;
+        text-decoration: none;
+        margin-bottom: 0.7rem;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+    }
+
+    .footer-links-group a:hover {
+        color: #2196F3;
+    }
+
+    .footer-bottom {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        gap: 1rem;
+    }
+
+    .copyright {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    .secondary-links {
+        font-size: 0.9rem;
+    }
+
+    .secondary-links a {
+        color: #e0e0e0;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .secondary-links a:hover {
+        color: #2196F3;
+    }
+
+    .separator {
+        margin: 0 0.5rem;
+        opacity: 0.5;
+    }
+
+    .powered-by {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .footer-main {
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .footer-links {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .footer-links {
+            gap: 2rem;
+        }
+
+        .footer-bottom {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .footer-links {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .site-footer {
+            padding: 2rem 0 1rem;
+        }
+    }
+</style>
