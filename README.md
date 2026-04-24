@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="docs/images/emblem.png" alt="shellsmith">
+    <img src="docs/images/logo.png" alt="emblen">
 </div>
 
 <div align="center">
