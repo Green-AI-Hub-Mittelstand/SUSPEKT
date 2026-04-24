@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">YOLO Object Detection</h1>
+    
+    <form id="uploadForm" class="mb-6">
+        <div class="flex gap-4">
+            <input type="file" 
+                   name="file" 
+                   accept="image/*" 
+                   required 
+                   class="border p-2 rounded">
+            <button type="submit" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Detect Objects
+            </button>
+        </div>
+    </form>
+
+    <div id="loading" class="loading text-gray-600 mb-4">Processing...</div>
+    
+    <div class="image-container" id="result"></div>
+    
+    <div id="error" class="error text-red-500"></div>
+</div>
+
+{% block scripts %}
+<script>
+    const form = document.getElementById('uploadForm');
+    const result = document.getElementById('result');
+    const error = document.getElementById('error');
+    const loading = document.getElementById('loading');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        error.textContent = '';
+        loading.style.display = 'block';
+        result.innerHTML = '';
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/detect/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Response:', data);
+
+                if (data.image_path) {
+                    const img = new Image();
+                    img.onload = () => {
+                        console.log('Image loaded successfully');
+                        loading.style.display = 'none';
+                    };
+                    img.onerror = (e) => {
+                        console.error('Image loading error:', e);
+                        error.textContent = 'Error loading the processed image';
+                        loading.style.display = 'none';
+                    };
+                    img.src = data.image_path + '?t=' + new Date().getTime();
+                    result.appendChild(img);
+                } else {
+                    error.textContent = 'No image path in response';
+                    loading.style.display = 'none';
+                }
+            } else {
+                const errorData = await response.json();
+                error.textContent = errorData.detail || 'Error processing image';
+                loading.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            error.textContent = 'Error uploading image: ' + err.message;
+            loading.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
+
+<style>
+    .loading {
+        display: none;
+    }
+    .image-container img {
+        max-width: 100%;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}

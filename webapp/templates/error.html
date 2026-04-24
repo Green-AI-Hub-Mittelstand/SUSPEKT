@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Fehler{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Ein Fehler ist aufgetreten</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        {{ message }}
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="/" class="btn btn-primary">Zurück zur Startseite</a>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary ml-2">Zurück zur vorherigen Seite</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

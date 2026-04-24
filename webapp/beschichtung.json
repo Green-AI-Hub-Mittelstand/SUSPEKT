@@ -1,0 +1,14 @@
+{
+    "Edelstahl": {
+        "name": "Edelstahl",
+        "hex_code": "#C0C0C0",
+        "ncs_code": "2500-N",
+        "rgb_values": [192, 192, 192]
+    },
+    "Schwarz Pulverbeschichtet": {
+        "name": "Schwarz Pulverbeschichtet",
+        "hex_code": "#2B2B2B",
+        "ncs_code": "8502-Y",
+        "rgb_values": [43, 43, 43]
+    }
+}
