@@ -2,6 +2,7 @@ import json
 import os
 import random
 import shutil
+import sys
 import urllib.parse
 
 import requests
@@ -39,12 +40,37 @@ DATA_YAML = os.path.join(YOLO_DATASET_DIR, "data.yaml")
 MODEL_NAME = os.getenv("MODEL_NAME", "my_custom_model.pt")
 
 MODEL_PATH = os.path.join("model", MODEL_NAME)
-RUNS_DIR = "C:/runs/detect"
+
+
+def _default_runs_dir() -> str:
+    """Directory where ultralytics saves training runs (…/runs/detect)."""
+    try:
+        from ultralytics import settings as yolo_settings
+        return os.path.join(yolo_settings["runs_dir"], "detect")
+    except Exception:
+        return os.path.join("runs", "detect")
+
+
+def _default_label_studio_media_dir() -> str:
+    """Label Studio's default upload dir (appdirs user data dir per platform)."""
+    home = os.path.expanduser("~")
+    if sys.platform == "win32":
+        base = os.getenv("LOCALAPPDATA", os.path.join(home, "AppData", "Local"))
+        data_dir = os.path.join(base, "label-studio", "label-studio")
+    elif sys.platform == "darwin":
+        data_dir = os.path.join(home, "Library", "Application Support", "label-studio")
+    else:
+        base = os.getenv("XDG_DATA_HOME", os.path.join(home, ".local", "share"))
+        data_dir = os.path.join(base, "label-studio")
+    return os.path.join(data_dir, "media", "upload")
+
+
+RUNS_DIR = os.getenv("RUNS_DIR", _default_runs_dir())
 TRAIN_RATIO = 0.8
 ANNOTATIONS_FILE = "annotations.json"
 TRAINED_IMAGES_FILE = "trained_images.json"
-user_home = os.path.expanduser("~")
-LABEL_STUDIO_MEDIA_DIR = os.path.join(user_home, "AppData", "Local", "label-studio", "label-studio", "media", "upload")
+LABEL_STUDIO_MEDIA_DIR = os.getenv(
+    "LABEL_STUDIO_MEDIA_DIR", _default_label_studio_media_dir())
 training_in_progress = False
 
 
