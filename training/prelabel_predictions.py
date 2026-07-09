@@ -50,7 +50,9 @@ def iter_tasks(session: requests.Session, ls_url: str, project_id: int):
             if exc.response is not None and exc.response.status_code == 404:
                 return
             raise
-        tasks = data.get("tasks", data if isinstance(data, list) else [])
+        # Depending on the Label Studio version the endpoint returns either
+        # {"tasks": [...]} or a plain list.
+        tasks = data if isinstance(data, list) else data.get("tasks", [])
         if not tasks:
             return
         yield from tasks

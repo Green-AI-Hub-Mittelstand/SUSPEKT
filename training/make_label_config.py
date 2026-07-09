@@ -12,6 +12,7 @@ Usage:
 
 import argparse
 import colorsys
+from xml.sax.saxutils import quoteattr
 
 
 def class_names_from_model(model_path: str) -> list[str]:
@@ -32,7 +33,8 @@ def build_config(class_names: list[str]) -> str:
         hue = i / max(len(class_names), 1)
         r, g, b = (int(c * 255) for c in colorsys.hsv_to_rgb(hue, 0.65, 0.85))
         lines.append(
-            f'    <Label value="{name}" background="#{r:02x}{g:02x}{b:02x}"/>'
+            f'    <Label value={quoteattr(name)} '
+            f'background="#{r:02x}{g:02x}{b:02x}"/>'
         )
     lines += ["  </RectangleLabels>", "</View>"]
     return "\n".join(lines)
