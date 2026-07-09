@@ -7,7 +7,7 @@ import urllib.parse
 import requests
 from dotenv import load_dotenv
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from ultralytics import YOLO
 
@@ -15,8 +15,20 @@ router = APIRouter(prefix="/training")
 templates = Jinja2Templates(directory="templates")
 
 load_dotenv()
-LABEL_STUDIO_API_URL = os.getenv("LABEL_STUDIO_API_URL").format(id=os.getenv("PROJECT_ID"))
+PROJECT_ID = os.getenv("PROJECT_ID", "1")
+LABEL_STUDIO_API_URL = os.getenv(
+    "LABEL_STUDIO_API_URL",
+    "http://localhost:8082/api/projects/{id}/export?exportType=JSON",
+).format(id=PROJECT_ID)
 LABEL_STUDIO_API_KEY = os.getenv("LABEL_STUDIO_API_KEY")
+# Base URL of the Label Studio UI for the admin page; falls back to the
+# scheme+host of the API URL so a single .env entry is enough.
+LABEL_STUDIO_BASE_URL = os.getenv("LABEL_STUDIO_BASE_URL") or urllib.parse.urlsplit(
+    LABEL_STUDIO_API_URL)._replace(path="", query="", fragment="").geturl()
+COLAB_NOTEBOOK_URL = (
+    "https://colab.research.google.com/github/Green-AI-Hub-Mittelstand/SUSPEKT/"
+    "blob/main/notebooks/SUSPEKT_YOLO_Weitertraining_Colab.ipynb"
+)
 
 YOLO_DATASET_DIR = "yolo_dataset"
 IMAGES_DIR = os.path.join(YOLO_DATASET_DIR, "images")
@@ -217,12 +229,21 @@ names: {list(label_map.keys())}
 
 @router.get("", response_class=HTMLResponse)
 async def training_index(request: Request):
-    """Render the image upload page"""
-    return templates.TemplateResponse("training.html", {"request": request})
+    """Render the training & labeling admin page"""
+    if request.session.get("user") != "admin":
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("training.html", {
+        "request": request,
+        "label_studio_url": LABEL_STUDIO_BASE_URL,
+        "project_id": PROJECT_ID,
+        "colab_url": COLAB_NOTEBOOK_URL,
+    })
 
 
 @router.post("/train")
-async def train_model():
-    """Trigger the training process"""
+async def train_model(request: Request):
+    """Trigger the (legacy, local) training process"""
+    if request.session.get("user") != "admin":
+        return {"error": "Nur für eingeloggte Admins."}
     status = start_training()
     return status
