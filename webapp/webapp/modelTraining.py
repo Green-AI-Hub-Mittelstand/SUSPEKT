@@ -11,6 +11,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from ultralytics import YOLO
 
+from .auth import is_admin
+
 router = APIRouter(prefix="/training")
 templates = Jinja2Templates(directory="templates")
 
@@ -230,7 +232,7 @@ names: {list(label_map.keys())}
 @router.get("", response_class=HTMLResponse)
 async def training_index(request: Request):
     """Render the training & labeling admin page"""
-    if request.session.get("user") != "admin":
+    if not is_admin(request):
         return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("training.html", {
         "request": request,
@@ -243,7 +245,7 @@ async def training_index(request: Request):
 @router.post("/train")
 async def train_model(request: Request):
     """Trigger the (legacy, local) training process"""
-    if request.session.get("user") != "admin":
+    if not is_admin(request):
         return {"error": "Nur für eingeloggte Admins."}
     status = start_training()
     return status
