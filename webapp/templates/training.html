@@ -280,7 +280,8 @@
                 html += row(s.token_ok, 'Zugang (API-Token)',
                     s.token_ok ? 'Token ist hinterlegt und gültig.'
                         : `In <a href="${LS_URL}" target="_blank" rel="noopener">Label Studio</a> oben rechts
-                           auf das Profil &rarr; „Account &amp; Settings“ &rarr; Token kopieren und hier einfügen:`,
+                           auf das Profil &rarr; „Account &amp; Settings“ &rarr; Bereich „Access Token“ &rarr;
+                           „Create“ bzw. „Copy“, dann den kompletten Token hier einfügen:`,
                     s.token_ok ? '' :
                         `<input type="password" id="ls-token" class="ls-token-input" placeholder="Token einfügen">
                          <button class="ls-btn" onclick="saveToken()">Speichern</button>`);
