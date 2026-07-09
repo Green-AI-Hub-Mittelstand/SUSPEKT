@@ -9,6 +9,7 @@ system180-env
 data
 labelstudio-data
 training_captures
+config
 static/detected_images
 __pycache__/
 uploads
