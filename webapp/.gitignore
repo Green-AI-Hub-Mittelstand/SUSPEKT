@@ -1,6 +1,7 @@
 .idea
 .venv
 system180-env
+.env
 *.egg-info
 *.db
 *.sqlite3

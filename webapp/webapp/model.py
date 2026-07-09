@@ -70,7 +70,8 @@ app.add_middleware(
 )
 
 # app.add_middleware(HTTPSRedirectMiddleware)
-app.add_middleware(SessionMiddleware, secret_key="supergeheim123")
+app.add_middleware(
+    SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "supergeheim123"))
 
 
 # Setup static and template directories
