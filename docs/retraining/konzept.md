@@ -95,7 +95,7 @@ enthält eine optionale Roboflow-Zelle, falls der Datensatz dort gepflegt wird.
 
 ## 3. Zielarchitektur: der Trainings-Loop
 
-```
+```text
    Demonstrator (Jetson, 3 Kameras)                Webseite (Server)
    ┌──────────────────────────────┐        ┌────────────────────────────┐
    │ [1] Knopf „Trainingsbild     │        │ [1b] Admin: „Für Training  │
@@ -186,8 +186,11 @@ SUSPEKT-Repo liegt):
 
 ## 6. Label Studio einrichten
 
-```bash
-# docker-compose.labelstudio.yml (auf dem Webseiten-Server)
+Der Service ist in [`webapp/compose.yaml`](../../webapp/compose.yaml)
+integriert (`docker compose up -d` startet Webapp **und** Label Studio):
+
+```yaml
+# Auszug aus webapp/compose.yaml (auf dem Webseiten-Server)
 services:
   labelstudio:
     image: heartexlabs/label-studio:latest

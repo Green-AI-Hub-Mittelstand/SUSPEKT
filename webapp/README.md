@@ -30,7 +30,11 @@ Start with:
 docker-compose up -d
 ```
 
-You can access the webapp at http://localhost:8000.
+You can access the webapp at [http://localhost:8000](http://localhost:8000).
+Label Studio (labeling backend for the retraining pipeline) is started
+alongside and available at [http://localhost:8082](http://localhost:8082) —
+its data lives in `./labelstudio-data`, synced capture images are read from
+`./training_captures`.
 
 ### Docker (manually)
 
