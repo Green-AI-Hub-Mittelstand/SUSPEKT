@@ -31,12 +31,14 @@
                         <span>Digitales Lager</span>
                     </a>
                 </li>
+                {% if request.session.get('user') == 'admin' %}
                 <li class="nav-item">
                     <a href="/training" class="nav-link">
                         <i class="fas fa-graduation-cap"></i>
                         <span>Training</span>
                     </a>
                 </li>
+                {% endif %}
                 <li class="nav-item">
                     <a href="/resource" class="nav-link">
                         <i class="fas fa-recycle"></i>
