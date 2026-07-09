@@ -227,9 +227,19 @@ services:
 
 Vollständig vorbereitet in
 [`notebooks/SUSPEKT_YOLO_Weitertraining_Colab.ipynb`](../../notebooks/SUSPEKT_YOLO_Weitertraining_Colab.ipynb):
-Drive einbinden → Datensatz-Zip entpacken → Klassenabgleich mit dem Basismodell
-→ Fine-Tuning → Validierung mit mAP-Vergleich alt/neu → Export `best.pt` +
-`best.onnx` (versioniert) zurück nach Drive.
+Datensatz-Zip bereitstellen → entpacken → Klassenabgleich mit dem Basismodell →
+Fine-Tuning → Validierung mit mAP-Vergleich alt/neu → Export `best.pt` +
+`best.onnx` (versioniert).
+
+Das Notebook kennt zwei Bezugswege (`MODUS` in der Konfigurationszelle):
+
+- **`'upload'` (Standard, ohne Google Drive):** Das Basismodell wird automatisch
+  aus dem GitHub-Repo geladen, das Datensatz-Zip (Download-Button auf der
+  `/training`-Seite) direkt im Browser hochgeladen; die Ergebnisdateien werden am
+  Ende heruntergeladen. Ideal für einzelne Trainingsläufe ohne Drive-Einrichtung.
+- **`'drive'`:** Basismodell und Datensatz aus `MyDrive/SUSPEKT/…`, Ergebnisse
+  zurück nach `MyDrive/SUSPEKT/modelle_neu/`. Bequemer, wenn regelmäßig trainiert
+  wird und die Datensätze ohnehin in Drive liegen.
 
 Fachliche Leitplanken (im Notebook umgesetzt bzw. dokumentiert):
 

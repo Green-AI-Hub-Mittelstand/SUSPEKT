@@ -82,14 +82,23 @@
     </ol>
 
     <h2>Datensatz exportieren &amp; trainieren</h2>
-    <p>Der Export läuft über das Skript aus dem Repository (Details in
+    <ol class="labeling-guide">
+        <li>Oben im Einrichtungs-Kasten auf <strong>„Datensatz für Colab
+            (zip)“</strong> klicken — die Datei <code>yolo_dataset_*.zip</code>
+            wird heruntergeladen.</li>
+        <li><strong>„Training in Google Colab starten“</strong> (Button ganz
+            oben) öffnet das Notebook. Im Notebook ist <code>MODUS = 'upload'</code>
+            voreingestellt: Basismodell kommt automatisch aus dem Repo, das Zip
+            lädst du <strong>direkt im Browser hoch</strong> — Google Drive ist
+            nicht nötig.</li>
+        <li>Notebook Zelle für Zelle ausführen (GPU-Laufzeit wählen). Nur wenn
+            das Qualitäts-Gate bestanden ist, das neue <code>.pt</code> in
+            <code>webapp/model/</code> legen und <code>MODEL_NAME</code>
+            umstellen.</li>
+    </ol>
+    <p class="ls-detail">Technische Details zum Export-Skript stehen in
        <a href="https://github.com/Green-AI-Hub-Mittelstand/SUSPEKT/blob/main/training/README.md"
-          target="_blank" rel="noopener"><code>training/README.md</code></a>):</p>
-    <pre class="export-command">python training/export_yolo_dataset.py --project {{ project_id }} \
-    --model webapp/model/&lt;aktuelles-modell&gt;.pt --out yolo_dataset --zip</pre>
-    <p>Das erzeugte <code>yolo_dataset.zip</code> nach Google Drive
-       (<code>MyDrive/SUSPEKT/datensaetze/</code>) hochladen und dann oben
-       „Training in Google Colab starten“ klicken.</p>
+          target="_blank" rel="noopener"><code>training/README.md</code></a>.</p>
 
     <details class="legacy-training">
         <summary>Lokales Training auf diesem Server (experimentell, nicht empfohlen)</summary>
