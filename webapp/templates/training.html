@@ -1,87 +1,208 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="upload-page-container">
-    <h1>Landing Page for Training</h1>
+<div class="training-page">
+    <h1><i class="fas fa-graduation-cap"></i> Training &amp; Labeling</h1>
+    <p class="training-intro">
+        Hier verbessert ihr die KI-Erkennung selbst: neue Bilder sammeln, in
+        Label Studio die Vorschläge des Modells korrigieren und das Modell in
+        Google Colab weitertrainieren. Die ausführliche Anleitung steht in den
+        <a href="https://github.com/Green-AI-Hub-Mittelstand/SUSPEKT/blob/main/docs/retraining/schulung.md"
+           target="_blank" rel="noopener">Schulungsunterlagen</a> und im
+        <a href="https://github.com/Green-AI-Hub-Mittelstand/SUSPEKT/blob/main/docs/retraining/konzept.md"
+           target="_blank" rel="noopener">Konzept</a>.
+    </p>
 
-    <form id="upload-form" method="post" enctype="multipart/form-data">
-        <div class="button-container">
-
-            <button type="button" id="train-model-btn" class="btn btn-success">
-                <i class="fas fa-cogs"></i>
-                Trainieren
-            </button>
-        </div>
-    </form>
-
-
-    <div id="loading">
-        <div class="spinner"></div>
-        <p>Bilder werden verarbeitet...</p>
+    <div class="training-actions">
+        <a href="{{ label_studio_url }}" target="_blank" rel="noopener"
+           class="btn-training btn-labelstudio">
+            <i class="fas fa-tags"></i> Label Studio öffnen
+        </a>
+        <a href="{{ colab_url }}" target="_blank" rel="noopener"
+           class="btn-training btn-colab">
+            <i class="fas fa-rocket"></i> Training in Google Colab starten
+        </a>
     </div>
+
+    <h2>So funktioniert der Kreislauf</h2>
+    <div class="workflow-grid">
+        <div class="workflow-card">
+            <div class="workflow-step">1</div>
+            <h3><i class="fas fa-camera"></i> Bilder sammeln</h3>
+            <p>Am Demonstrator „Trainingsbild speichern“ drücken oder hier im
+               Upload die Ergebnisse „Für Training speichern“. Besonders wertvoll:
+               Bilder, bei denen das Modell <strong>Fehler</strong> macht.</p>
+        </div>
+        <div class="workflow-card">
+            <div class="workflow-step">2</div>
+            <h3><i class="fas fa-tags"></i> Labeln in Label Studio</h3>
+            <p>Das aktuelle Modell schlägt die Boxen schon vor — ihr korrigiert
+               nur: falsche Klasse umschalten, Boxen nachziehen, Übersehenes
+               ergänzen.</p>
+        </div>
+        <div class="workflow-card">
+            <div class="workflow-step">3</div>
+            <h3><i class="fas fa-brain"></i> Trainieren in Colab</h3>
+            <p>Datensatz exportieren, Zip nach Google Drive laden und das
+               Colab-Notebook Zelle für Zelle ausführen — inklusive
+               Qualitäts-Vergleich mit dem alten Modell.</p>
+        </div>
+        <div class="workflow-card">
+            <div class="workflow-step">4</div>
+            <h3><i class="fas fa-rocket"></i> Modell einspielen</h3>
+            <p>Nur wenn das neue Modell besser ist: <code>.pt</code> in den
+               Modell-Ordner legen, <code>MODEL_NAME</code> umstellen, für den
+               Demonstrator TensorRT auf dem Jetson bauen.</p>
+        </div>
+    </div>
+
+    <h2>Kurzanleitung: Labeln mit Label Studio</h2>
+    <ol class="labeling-guide">
+        <li><strong>Öffnen &amp; einloggen:</strong> Button oben nutzt euren
+            Label-Studio-Server (Projekt-Nr. {{ project_id }}). Zugangsdaten wie in
+            der Schulung vergeben.</li>
+        <li><strong>Projekt wählen:</strong> „Komponenten“ (Draufsicht) bzw.
+            „Nubs“ (Seitenkameras), dann einen Task ohne Häkchen öffnen.</li>
+        <li><strong>Vorschläge prüfen:</strong> Die Boxen des Modells erscheinen
+            automatisch. <em>Nie blind bestätigen</em> — jede Box kurz ansehen.</li>
+        <li><strong>Korrigieren:</strong> Box anklicken → Klasse ändern oder
+            Ecken nachziehen; falsche Boxen löschen (Entf), fehlende Bauteile neu
+            einrahmen. Regeln: Box eng ans Bauteil, alle sichtbaren Teile labeln,
+            bei Unsicherheit nicht raten, sondern „Skip“ + Kommentar.</li>
+        <li><strong>Speichern:</strong> „Submit“ klicken — der nächste Task
+            öffnet sich automatisch.</li>
+        <li><strong>Genug gesammelt?</strong> Ab ca. 100 neu gelabelten Bildern
+            lohnt ein Trainingslauf (Schritt 3 im Kreislauf).</li>
+    </ol>
+
+    <h2>Datensatz exportieren &amp; trainieren</h2>
+    <p>Der Export läuft über das Skript aus dem Repository (Details in
+       <a href="https://github.com/Green-AI-Hub-Mittelstand/SUSPEKT/blob/main/training/README.md"
+          target="_blank" rel="noopener"><code>training/README.md</code></a>):</p>
+    <pre class="export-command">python training/export_yolo_dataset.py --project {{ project_id }} \
+    --model webapp/model/&lt;aktuelles-modell&gt;.pt --out yolo_dataset --zip</pre>
+    <p>Das erzeugte <code>yolo_dataset.zip</code> nach Google Drive
+       (<code>MyDrive/SUSPEKT/datensaetze/</code>) hochladen und dann oben
+       „Training in Google Colab starten“ klicken.</p>
+
+    <details class="legacy-training">
+        <summary>Lokales Training auf diesem Server (experimentell, nicht empfohlen)</summary>
+        <p>Startet das alte serverseitige Training ohne GPU und ohne
+           Qualitäts-Vergleich — nur für Testinstallationen gedacht.
+           Der empfohlene Weg ist das Colab-Notebook.</p>
+        <button type="button" id="train-model-btn" class="btn-training btn-legacy">
+            <i class="fas fa-cogs"></i> Lokales Training starten
+        </button>
+        <div id="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>Training läuft – das kann dauern …</p>
+        </div>
+    </details>
 </div>
 
+<style>
+.training-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+.training-page h1 { margin-bottom: 0.5rem; }
+.training-page h2 { margin: 2.5rem 0 1rem; }
+.training-intro { color: #555; max-width: 46rem; }
+.training-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0 0.5rem;
+}
+.btn-training {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.4rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-training:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+.btn-labelstudio { background: #2196F3; color: #fff; }
+.btn-colab { background: #f9ab00; color: #fff; }
+.btn-legacy { background: #eee; color: #444; margin-top: 0.5rem; }
+.workflow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+.workflow-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.2rem;
+    position: relative;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.workflow-card h3 { margin: 0 0 0.5rem; font-size: 1.02rem; }
+.workflow-card p { margin: 0; font-size: 0.92rem; color: #555; }
+.workflow-step {
+    position: absolute;
+    top: -12px;
+    left: -12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #2196F3;
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.labeling-guide li { margin-bottom: 0.6rem; }
+.export-command {
+    background: #263238;
+    color: #e8eaf0;
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.9rem;
+}
+.legacy-training {
+    margin-top: 2.5rem;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    color: #666;
+}
+.legacy-training summary { cursor: pointer; font-weight: 600; }
+</style>
 {% endblock %}
-
 
 {% block extra_js %}
 <script>
-    const fileInput = document.getElementById('file-input');
-    const detectObjectsBtn = document.getElementById('detect-objects-btn');
-    const uploadForm = document.getElementById('upload-form');
     const loading = document.getElementById('loading');
-    const selectFilesBtn = document.getElementById('select-files-btn');
-    const openCameraBtn = document.getElementById('open-camera-btn');
-    const cameraModal = document.getElementById('camera-modal');
-    const closeModal = document.querySelector('.close-modal');
-    const video = document.getElementById('camera-stream');
-    const canvas = document.getElementById('camera-canvas');
-    const captureBtn = document.getElementById('capture-btn');
-    const switchCameraBtn = document.getElementById('switch-camera-btn');
-    const modalAnalyzeBtn = document.getElementById('modal-analyze-btn');
-    const imageCountDisplay = document.getElementById('image-count');
-
-    let currentStream = null;
-    let facingMode = 'environment'; // Start with back camera
-    function startTraining() {
-        // Show a loading indicator
-        loading.style.display = 'block';
-
-        // Send a POST request to the /train endpoint
-        fetch("/train", {
-            method: "POST", // Use POST method for training request
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Hide the loading spinner once the response is received
-            loading.style.display = 'none';
-
-            // Handle the response (show a message or update UI accordingly)
-            if (data.status === "Training complete!") {
-                alert("Training started successfully!");
-            }
-            else if(data.status ==="No new image detected, skipping training and update."){
-                alert("No new image detected, skipping training and update.");
-            }
-            else if(data.status ==="Only one new image detected, skipping training and update."){
-                alert("Only one new image detected, skipping training and update.")
-            }
-            else {
-                alert("Error starting training: " + data.message);
-            }
-        })
-        .catch(error => {
-            // Hide the loading spinner in case of error
-            loading.style.display = 'none';
-            alert("An error occurred: " + error);
-        });
-    }
-
     const trainModelBtn = document.getElementById('train-model-btn');
-    trainModelBtn.addEventListener('click', startTraining);
-</script>
 
+    trainModelBtn.addEventListener('click', function () {
+        if (!confirm('Lokales Training wirklich starten? Empfohlen ist der Colab-Weg.')) {
+            return;
+        }
+        loading.style.display = 'block';
+        fetch('/training/train', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                alert(data.status || data.error || 'Unbekannte Antwort vom Server.');
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                alert('Fehler beim Training: ' + error);
+            });
+    });
+</script>
 {% endblock %}
