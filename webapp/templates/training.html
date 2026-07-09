@@ -24,6 +24,12 @@
         </a>
     </div>
 
+    <h2>Einrichtung &amp; Bedienung (ohne Terminal)</h2>
+    <div id="ls-assistant" class="ls-assistant">
+        <p class="ls-loading">Prüfe Label-Studio-Status …</p>
+    </div>
+    <div id="ls-progress" class="ls-progress" style="display:none;"></div>
+
     <h2>So funktioniert der Kreislauf</h2>
     <div class="workflow-grid">
         <div class="workflow-card">
@@ -180,11 +186,180 @@
     color: #666;
 }
 .legacy-training summary { cursor: pointer; font-weight: 600; }
+.ls-assistant {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.ls-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+}
+.ls-row:last-child { border-bottom: none; }
+.ls-light { font-size: 1.05rem; width: 1.4rem; text-align: center; }
+.ls-ok { color: #2e7d32; }
+.ls-bad { color: #c62828; }
+.ls-label { font-weight: 600; min-width: 15rem; }
+.ls-detail { color: #666; font-size: 0.9rem; flex: 1; }
+.ls-btn {
+    border: none;
+    border-radius: 5px;
+    padding: 0.5rem 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: #2196F3;
+    color: #fff;
+    font-size: 0.88rem;
+}
+.ls-btn:disabled { background: #b0bec5; cursor: default; }
+.ls-btn.secondary { background: #eceff1; color: #37474f; }
+.ls-token-input {
+    flex: 1;
+    min-width: 14rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: monospace;
+}
+.ls-progress {
+    margin-top: 0.8rem;
+    background: #e3f2fd;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    font-size: 0.92rem;
+}
+.ls-progress.error { background: #ffebee; }
+.ls-progress .bar {
+    height: 8px;
+    background: #bbdefb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+.ls-progress .bar > div { height: 100%; background: #2196F3; width: 0; }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    // ---------- Label-Studio-Einrichtungsassistent ----------
+    const assistant = document.getElementById('ls-assistant');
+    const progressBox = document.getElementById('ls-progress');
+    const LS_URL = {{ label_studio_url | tojson }};
+
+    function row(ok, label, detail, actionsHtml) {
+        return `<div class="ls-row">
+            <span class="ls-light ${ok ? 'ls-ok' : 'ls-bad'}">${ok ? '✔' : '✘'}</span>
+            <span class="ls-label">${label}</span>
+            <span class="ls-detail">${detail || ''}</span>
+            ${actionsHtml || ''}
+        </div>`;
+    }
+
+    async function api(path, options) {
+        const response = await fetch('/training/labelstudio' + path, options);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+        return data;
+    }
+
+    async function refreshStatus() {
+        try {
+            const s = await api('/status');
+            let html = '';
+            html += row(s.reachable, 'Label Studio läuft',
+                s.reachable ? `<a href="${LS_URL}" target="_blank" rel="noopener">${LS_URL}</a>`
+                            : 'Nicht erreichbar — auf dem Server „docker compose up -d“ ausführen.');
+            if (s.reachable) {
+                html += row(s.token_ok, 'Zugang (API-Token)',
+                    s.token_ok ? 'Token ist hinterlegt und gültig.'
+                        : `In <a href="${LS_URL}" target="_blank" rel="noopener">Label Studio</a> oben rechts
+                           auf das Profil &rarr; „Account &amp; Settings“ &rarr; Token kopieren und hier einfügen:`,
+                    s.token_ok ? '' :
+                        `<input type="password" id="ls-token" class="ls-token-input" placeholder="Token einfügen">
+                         <button class="ls-btn" onclick="saveToken()">Speichern</button>`);
+            }
+            if (s.token_ok) {
+                for (const [kind, p] of Object.entries(s.projects)) {
+                    if (!p.model_available) {
+                        html += row(false, p.title, `Modelldatei ${p.model} fehlt in webapp/model/.`);
+                        continue;
+                    }
+                    if (!p.exists) {
+                        html += row(false, p.title, `Noch nicht eingerichtet (nutzt Modell ${p.model}).`,
+                            `<button class="ls-btn" onclick="runAction('/setup/${kind}', this)">Projekt anlegen</button>`);
+                    } else {
+                        html += row(true, p.title,
+                            `Projekt Nr. ${p.id}: ${p.tasks} Bilder, davon ${p.annotated} fertig gelabelt.
+                             Neue Bilder in den Ordner <code>training_captures/${kind}/</code> legen.`,
+                            `<button class="ls-btn" onclick="startPrelabel('${kind}', this)">Neue Bilder importieren &amp; vorlabeln</button>
+                             <a class="ls-btn secondary" href="/training/labelstudio/export/${kind}">Datensatz für Colab (zip)</a>`);
+                    }
+                }
+            }
+            assistant.innerHTML = html;
+            if (s.progress && s.progress.state === 'running') showProgress(s.progress), pollProgress();
+        } catch (e) {
+            assistant.innerHTML = `<p class="ls-bad">Status konnte nicht geladen werden: ${e.message}</p>`;
+        }
+    }
+
+    async function saveToken() {
+        const token = document.getElementById('ls-token').value;
+        try {
+            await api('/token', {method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({token})});
+            refreshStatus();
+        } catch (e) { alert(e.message); }
+    }
+
+    async function runAction(path, btn) {
+        btn.disabled = true;
+        try { alert((await api(path, {method: 'POST'})).status); }
+        catch (e) { alert(e.message); }
+        refreshStatus();
+    }
+
+    function showProgress(p) {
+        progressBox.style.display = 'block';
+        progressBox.className = 'ls-progress' + (p.state === 'error' ? ' error' : '');
+        const percent = p.total ? Math.round(100 * p.done / p.total) : 0;
+        progressBox.innerHTML = p.message +
+            (p.total ? ` (${p.done}/${p.total})<div class="bar"><div style="width:${percent}%"></div></div>` : '');
+    }
+
+    let polling = false;
+    async function pollProgress() {
+        if (polling) return;
+        polling = true;
+        try {
+            for (;;) {
+                const p = await api('/progress');
+                showProgress(p);
+                if (p.state !== 'running') break;
+                await new Promise(r => setTimeout(r, 2000));
+            }
+        } finally { polling = false; refreshStatus(); }
+    }
+
+    async function startPrelabel(kind, btn) {
+        btn.disabled = true;
+        try {
+            await api('/prelabel/' + kind, {method: 'POST'});
+            pollProgress();
+        } catch (e) { alert(e.message); btn.disabled = false; }
+    }
+
+    refreshStatus();
+
+    // ---------- Legacy: lokales Training ----------
     const loading = document.getElementById('loading');
     const trainModelBtn = document.getElementById('train-model-btn');
 

@@ -28,6 +28,7 @@ from .decorDetection import UnidekorDetector
 
 from .decorDetection import router as color_detection_router
 from .inventory_routes import router as inventory_router
+from .labelStudioAdmin import router as label_studio_admin_router
 from .modelTraining import router as model_training_router
 from .transport_emission import router as resource_router
 from .videoDetection import router as video_router
@@ -90,6 +91,7 @@ app.include_router(color_detection_router)
 app.include_router(inventory_router)
 app.include_router(video_router)
 app.include_router(model_training_router)
+app.include_router(label_studio_admin_router)
 app.include_router(resource_router)
 #(app.routes)
 
