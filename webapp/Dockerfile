@@ -19,7 +19,6 @@ COPY webapp /app/webapp
 COPY model /app/model
 COPY static /app/static
 COPY templates /app/templates
-COPY .env /app/.env
 COPY colors.json /app/colors.json
 COPY beschichtung.json /app/beschichtung.json
 
