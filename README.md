@@ -55,6 +55,10 @@ Digital Product Passports for System180’s modular furniture ecosystem, develop
 - **Green-AI Hub Mittelstand:** German Federal Ministry for the Environment initiative fostering resource-efficient AI pilots for SMEs; provides coordination, dissemination, and funding context.
 
 ## Documentation Map
+- `docs/retraining/konzept.md` — continual-learning concept: capture → Label Studio pre-labeling → Colab fine-tuning → deployment, incl. tool comparison (Label Studio vs. Roboflow vs. CVAT).
+- `docs/retraining/schulung.md` — full training-day curriculum for handing the retraining loop over to System 180.
+- `notebooks/SUSPEKT_YOLO_Weitertraining_Colab.ipynb` — ready-to-run Google Colab notebook for fine-tuning the YOLO models on Google GPUs (exports versioned `.pt` + `.onnx`).
+- `training/` — pipeline scripts: Label Studio label-config generation, YOLO pre-labeling (predictions API), and YOLO dataset export with stable class indices.
 - `docs/system180_project_reference.md` — deep dive into partners, use cases, data flow, modules, models, demonstrator mechanics, and deployment playbooks.
 - `paper/System_180_GAIH_Pilot__ISM_2025_.pdf` + `System180.tex` — full scientific manuscript accepted for ISM 2025.
 - `presentations/` — current slide decks (`perplexity/`, `system180/`) slated for consolidation into the final conference presentation.
