@@ -70,7 +70,8 @@ app.add_middleware(
 )
 
 # app.add_middleware(HTTPSRedirectMiddleware)
-app.add_middleware(SessionMiddleware, secret_key="***REMOVED-SESSION-SECRET-ROTATE-ME***")
+app.add_middleware(
+    SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "***REMOVED-SESSION-SECRET-ROTATE-ME***"))
 
 
 # Setup static and template directories
