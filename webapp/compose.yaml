@@ -12,6 +12,10 @@ services:
       - LABEL_STUDIO_API_URL=http://labelstudio:8080/api/projects/{id}/export?exportType=JSON
       - LABEL_STUDIO_BASE_URL=http://localhost:8082
       - LABEL_STUDIO_MEDIA_DIR=/label-studio-media/upload
+      # Active model used for prelabeling/export/legacy training. Must match the
+      # detection model in webapp/config.py and the Label Studio labeling config
+      # (26 classes), otherwise retraining aborts on unknown classes.
+      - MODEL_NAME=system180custommodel_v1.pt
     volumes:
       - ./labelstudio-data/media:/label-studio-media:ro
       # Shared with the labelstudio service (same path there) so the setup
