@@ -255,25 +255,55 @@ def _iter_tasks(project_id: int):
         page += 1
 
 
+# Extensions ultralytics/YOLO accept. It keys off the file name, so a valid
+# image imported without a proper extension (e.g. a saved web thumbnail) must be
+# given one before predicting/exporting.
+_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff",
+                   ".webp", ".dng", ".mpo", ".pfm", ".heic"}
+_PIL_FORMAT_TO_SUFFIX = {"JPEG": ".jpg", "PNG": ".png", "BMP": ".bmp",
+                         "TIFF": ".tif", "WEBP": ".webp", "MPO": ".jpg",
+                         "GIF": ".png"}
+
+
+def _ensure_image_suffix(path: str, tmp_dir: str) -> str:
+    """Guarantee the file has an image extension YOLO recognizes. If it doesn't,
+    detect the real format from the content and copy it with a proper suffix."""
+    if Path(path).suffix.lower() in _IMAGE_SUFFIXES:
+        return path
+    try:
+        from PIL import Image
+        with Image.open(path) as img:
+            suffix = _PIL_FORMAT_TO_SUFFIX.get(img.format or "", ".jpg")
+    except Exception:
+        suffix = ".jpg"
+    fd, new_path = tempfile.mkstemp(suffix=suffix, dir=tmp_dir)
+    with os.fdopen(fd, "wb") as dst, open(path, "rb") as src:
+        dst.write(src.read())
+    return new_path
+
+
 def _resolve_image(image_ref: str, tmp_dir: str) -> str:
-    """Return a readable local path for a task image, downloading if needed."""
+    """Return a readable local path (with a valid image extension) for a task
+    image, downloading through the API if it isn't available locally."""
     if image_ref.startswith("/data/local-files/"):
         query = urllib.parse.urlparse(image_ref).query
         rel = urllib.parse.parse_qs(query).get("d", [""])[0]
         local = Path(FILES_ROOT) / rel
         if local.exists():
-            return str(local)
+            return _ensure_image_suffix(str(local), tmp_dir)
     elif image_ref.startswith("/data/upload/"):
         rel = urllib.parse.unquote(image_ref)[len("/data/upload/"):]
         local = Path(LABEL_STUDIO_MEDIA_DIR) / rel
         if local.exists():
-            return str(local)
+            return _ensure_image_suffix(str(local), tmp_dir)
     # Fall back to downloading through the API.
     url = image_ref if image_ref.startswith(("http://", "https://")) \
         else f"{LS_INTERNAL_URL}{image_ref}"
     response = _session().get(url, timeout=120)
     response.raise_for_status()
-    suffix = Path(urllib.parse.urlparse(url).path).suffix or ".jpg"
+    suffix = Path(urllib.parse.urlparse(url).path).suffix.lower()
+    if suffix not in _IMAGE_SUFFIXES:
+        suffix = ".jpg"
     fd, path = tempfile.mkstemp(suffix=suffix, dir=tmp_dir)
     with os.fdopen(fd, "wb") as f:
         f.write(response.content)
@@ -313,6 +343,7 @@ def _job_sync_and_prelabel(kind: str) -> None:
         model = YOLO(_model_path(kind))
         model_version = Path(_model_path(kind)).stem
         done = failed = 0
+        last_error = ""
         _set_progress(total=len(todo),
                       message=f"Erzeuge Vorschläge für {len(todo)} Bilder …")
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -344,8 +375,9 @@ def _job_sync_and_prelabel(kind: str) -> None:
                         "result": items,
                     })
                     done += 1
-                except Exception:
+                except Exception as exc:
                     failed += 1
+                    last_error = str(exc)
                 _set_progress(done=done + failed)
         # Make these predictions the pre-annotations shown on task open, so
         # the admin never has to touch the "Use predictions" dropdown.
@@ -358,7 +390,8 @@ def _job_sync_and_prelabel(kind: str) -> None:
             pass
         message = f"Fertig: {done} Bilder vorgelabelt."
         if failed:
-            message += f" {failed} fehlgeschlagen."
+            message += f" {failed} fehlgeschlagen"
+            message += f" (z. B.: {last_error})." if last_error else "."
         _set_progress(state="done", message=message)
     except Exception as exc:
         _set_progress(state="error", message=f"Fehler: {exc}")
