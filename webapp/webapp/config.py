@@ -1,3 +1,5 @@
+import os
+
 from ultralytics import YOLO
 
 # Load YOLO model
@@ -31,9 +33,9 @@ color_detection_classes = [
 
 beschichtung_detection_classes = ["Gerade", "Diagonale", "Sockelfuss", "Mutternstab","Noppenscheiben", "Griff", "Schraube"]
 
-# ⚠️ Ersetze mit deinen Neo4j Aura Zugangsdaten
-NEO4J_URI = "neo4j+s://XXXXXX.databases.neo4j.io"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "XXXXXX"
+# Neo4j Aura Zugangsdaten, siehe webapp/.env.example
+NEO4J_URI = os.getenv("NEO4J_URI")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 
-HERE_API_KEY = "XXXXXX"
+HERE_API_KEY = os.getenv("HERE_API_KEY")

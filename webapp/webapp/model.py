@@ -19,6 +19,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
+from dotenv import load_dotenv
+
+# Must run before the local imports below, since several of them read
+# secrets from the environment (e.g. auth.py, config.py) at import time.
+load_dotenv()
+
 # Router import
 from .auth import router as auth_router
 from .conditionDetection import ZustandModel, Single_Transformer
@@ -37,12 +43,6 @@ from .videoDetection import router as video_router
 from .processImage import process_images
 from .user_db_models import init_db
 from .neo4jIntegration import Neo4jDatabase
-
-
-from dotenv import load_dotenv
-
-# HERE API Key laden
-load_dotenv()
 
 # Load YOLO model
 # MODEL = "model/system180custommodel_v1.pt"
@@ -70,9 +70,14 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. Set it in your .env "
+        "(see webapp/.env.example) before starting the app.")
+
 # app.add_middleware(HTTPSRedirectMiddleware)
-app.add_middleware(
-    SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "***REMOVED-SESSION-SECRET-ROTATE-ME***"))
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 
 # Setup static and template directories
