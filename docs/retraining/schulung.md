@@ -128,12 +128,16 @@ Ergebnisse beurteilen.
 
 - Versionsschema `YYMMDD_<zweck>_<basis>_<task>_<n>cls.pt` und Modell-Logbuch
   (einfache Tabelle: Datum, Datensatzgröße, mAP, wer, Bemerkung).
-- Webseite: Gewichte nach `webapp/model/`, `MODEL_NAME` in `.env`, Neustart,
-  Smoke-Test mit 3 Referenzbildern.
-- Jetson: Gewichte nach `models/`, `settings.py` anpassen,
+- Webseite: `.pt`- und `.onnx`-Datei auf der `/training`-Seite im Bereich
+  „Neues Modell einspielen“ per Drag & Drop hochladen — die neue Version wird
+  sofort aktiv, kein Terminal und kein Neustart nötig. Danach Smoke-Test mit
+  3 Referenzbildern.
+- Jetson: `.onnx` aus der Versionstabelle der `/training`-Seite herunterladen,
+  nach `models/` kopieren, `settings.py` anpassen,
   `tools/convert_models.sh` **auf dem Gerät**, Demonstrator-Smoke-Test.
-- **Rollback-Übung:** absichtlich „schlechtes" Modell eintragen und in < 5 min
-  zurückwechseln.
+- **Rollback-Übung:** absichtlich „schlechtes" Modell hochladen und in der
+  Versionstabelle auf `/training` in < 1 min die alte Version wieder
+  „Aktivieren“ — alte Versionen bleiben immer erhalten.
 
 ## Modul 7 — Betrieb, Qualität, Spielregeln (45 min, alle)
 

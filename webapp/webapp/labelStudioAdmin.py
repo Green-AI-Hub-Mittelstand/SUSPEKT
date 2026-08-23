@@ -29,8 +29,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 
 from .auth import is_admin
+from .modelRegistry import get_active_model
 from .modelTraining import (LABEL_STUDIO_API_KEY, LABEL_STUDIO_API_URL,
-                            LABEL_STUDIO_MEDIA_DIR, MODEL_NAME)
+                            LABEL_STUDIO_MEDIA_DIR)
 
 router = APIRouter(prefix="/training/labelstudio")
 
@@ -45,18 +46,26 @@ CONFIG_FILE = os.path.join(CONFIG_DIR, "labelstudio.json")
 # (both containers mount ./training_captures on this path).
 FILES_ROOT = os.getenv("LABEL_STUDIO_FILES_ROOT", "/label-studio/files")
 
-# The two labeling projects of the pilot. "model" is resolved relative to
-# the model/ directory of the webapp.
+# The labeling projects of the pilot. The model file for each kind comes
+# from the model registry (active version set on the /training page).
+# "classes" is a fixed label set used as long as no model for the kind exists
+# yet — that way the project can be created and labeled before the first
+# model is trained (chicken-and-egg of the damage model).
 PROJECT_KINDS = {
     "komponenten": {
         "title": "Komponenten (Draufsicht)",
-        "model": MODEL_NAME,
         "subdir": "komponenten",
     },
     "nubs": {
         "title": "Nubs (Seitenkameras)",
-        "model": os.getenv("NUBS_MODEL_NAME", "NubsUpDown.pt"),
         "subdir": "nubs",
+    },
+    "schaeden": {
+        "title": "Schäden (Kratzer, Dellen, MDF-Platzer)",
+        "subdir": "schaeden",
+        # Same values as the Zustand dropdown on the results page, so the
+        # detections map 1:1 onto the zustand/reusable fields.
+        "classes": ["MDF-Platzer", "Rohr_Kratzer", "Delle"],
     },
 }
 
@@ -140,10 +149,12 @@ def _api(method: str, path: str, **kwargs):
 # ------------------------------------------------------------ model bits ---
 
 def _model_path(kind: str) -> str:
-    return os.path.join("model", PROJECT_KINDS[kind]["model"])
+    return os.path.join("model", get_active_model(kind))
 
 
 def _class_names(kind: str) -> list[str]:
+    if not os.path.exists(_model_path(kind)) and PROJECT_KINDS[kind].get("classes"):
+        return PROJECT_KINDS[kind]["classes"]
     from ultralytics import YOLO
     names = YOLO(_model_path(kind)).names
     return [names[i] for i in sorted(names)]
@@ -328,6 +339,16 @@ def _job_sync_and_prelabel(kind: str) -> None:
         for storage in storages or []:
             _api("POST", f"/api/storages/localfiles/{storage['id']}/sync")
 
+        # Without a model (e.g. damage project before the first training) the
+        # import above is all we can do — labeling then happens by hand.
+        if not os.path.exists(_model_path(kind)):
+            _set_progress(state="done",
+                          message="Neue Bilder importiert. Vorschläge gibt es "
+                                  "erst, wenn das erste Modell für "
+                                  f"„{PROJECT_KINDS[kind]['title']}“ hochgeladen "
+                                  "wurde — bitte von Hand labeln.")
+            return
+
         # 2) Collect tasks that have no prediction yet.
         _set_progress(message="Suche Bilder ohne Vorschläge …")
         todo = [t for t in _iter_tasks(project_id)
@@ -427,9 +448,13 @@ async def status(request: Request):
     if result["token_ok"]:
         for kind, spec in PROJECT_KINDS.items():
             project = _find_project(kind)
+            model_exists = os.path.exists(_model_path(kind))
             entry = {"title": spec["title"], "exists": project is not None,
-                     "model": spec["model"],
-                     "model_available": os.path.exists(_model_path(kind))}
+                     "model": get_active_model(kind),
+                     # Setup/export work with the fixed label set even before
+                     # a model exists; only prelabeling needs the model file.
+                     "model_available": model_exists or bool(spec.get("classes")),
+                     "prelabel_possible": model_exists}
             if project:
                 entry.update(
                     id=project["id"],
@@ -490,9 +515,9 @@ async def setup_project(kind: str, request: Request):
     if kind not in PROJECT_KINDS:
         return JSONResponse({"error": "Unbekanntes Projekt."}, status_code=404)
     spec = PROJECT_KINDS[kind]
-    if not os.path.exists(_model_path(kind)):
+    if not os.path.exists(_model_path(kind)) and not spec.get("classes"):
         return JSONResponse(
-            {"error": f"Modell {spec['model']} fehlt in webapp/model/."},
+            {"error": f"Modell {get_active_model(kind)} fehlt in webapp/model/."},
             status_code=400)
     try:
         xml = _label_config_xml(_class_names(kind))

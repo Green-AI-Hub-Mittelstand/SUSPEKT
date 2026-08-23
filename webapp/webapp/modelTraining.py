@@ -4,6 +4,7 @@ import random
 import shutil
 import sys
 import urllib.parse
+from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ from fastapi.templating import Jinja2Templates
 from ultralytics import YOLO
 
 from .auth import is_admin
+from .modelRegistry import adopt_trained_model, get_active_model_path
 
 router = APIRouter(prefix="/training")
 templates = Jinja2Templates(directory="templates")
@@ -37,9 +39,6 @@ YOLO_DATASET_DIR = "yolo_dataset"
 IMAGES_DIR = os.path.join(YOLO_DATASET_DIR, "images")
 LABELS_DIR = os.path.join(YOLO_DATASET_DIR, "labels")
 DATA_YAML = os.path.join(YOLO_DATASET_DIR, "data.yaml")
-MODEL_NAME = os.getenv("MODEL_NAME", "my_custom_model.pt")
-
-MODEL_PATH = os.path.join("model", MODEL_NAME)
 
 
 def _default_runs_dir() -> str:
@@ -224,7 +223,8 @@ names: {list(label_map.keys())}
     """
             yaml_file.write(yaml_content.strip())
 
-        model = YOLO(MODEL_PATH if os.path.exists(MODEL_PATH) else "yolov8n.pt")
+        base_model_path = get_active_model_path("komponenten")
+        model = YOLO(base_model_path if os.path.exists(base_model_path) else "yolov8n.pt")
         model.train(data=DATA_YAML, epochs=10, imgsz=640)
 
         latest_training_folder = get_latest_training_folder(RUNS_DIR)
@@ -236,16 +236,23 @@ names: {list(label_map.keys())}
 
         # Check if the best model exists, otherwise use last model
         if os.path.exists(best_model_path):
-            print(f"Best model found at {best_model_path}, copying to {MODEL_PATH}")
-            shutil.copy(best_model_path, MODEL_PATH)
+            trained_path = best_model_path
         elif os.path.exists(last_model_path):
-            print(f"Best model not found, using last model at {last_model_path}, copying to {MODEL_PATH}")
-            shutil.copy(last_model_path, MODEL_PATH)
+            print(f"Best model not found, using last model at {last_model_path}")
+            trained_path = last_model_path
         else:
             print("Neither best nor last model found in the training folder.")
             return {"error": "No model found for saving, training might have failed."}
 
-        return {"status": "Training complete!", "model_saved_at": MODEL_PATH}
+        # Store as a NEW version and activate it — old versions are kept and
+        # can be re-activated on the /training page.
+        new_name = adopt_trained_model(
+            "komponenten", trained_path,
+            f"{datetime.now():%y%m%d}_komponenten_lokal.pt")
+        print(f"Trained model stored and activated as model/{new_name}")
+
+        return {"status": "Training complete!",
+                "model_saved_at": os.path.join("model", new_name)}
 
     except Exception as e:
         print(f"Error in training: {e}")

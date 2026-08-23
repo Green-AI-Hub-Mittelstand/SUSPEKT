@@ -263,7 +263,7 @@ Fachliche Leitplanken (im Notebook umgesetzt bzw. dokumentiert):
 
 | Ziel | Schritte |
 | --- | --- |
-| **Webseite** | `best.pt` versioniert nach `webapp/model/` kopieren (Schema `YYMMDD_<zweck>_<basis>_<task>_<n>cls.pt`), `MODEL_NAME` in `.env` umstellen, Container neu starten. Altes Modell liegen lassen → Rollback = `.env` zurückstellen. |
+| **Webseite** | `.pt` (und `.onnx`) auf der `/training`-Seite im Bereich „Neues Modell einspielen“ per Drag & Drop hochladen. Die Datei wird versioniert in `webapp/model/` abgelegt (nie überschrieben), in `config/models.json` registriert und ohne Neustart aktiviert. Rollback = alte Version in der Versionstabelle wieder „Aktivieren“. |
 | **Demonstrator (Jetson)** | `best.pt` nach `models/` kopieren, `YOLO_SOURCE_*` in `src/demonstrator/config/settings.py` anpassen, dann `tools/convert_models.sh` **auf dem Jetson** ausführen (TensorRT-Engines sind gerätespezifisch und müssen auf der Zielhardware gebaut werden, FP16/imgsz 320 wie gehabt). |
 | **ONNX** | erzeugt das Notebook mit (`opset`-kompatibel zur Jetson-TensorRT-Version); wird nur als Zwischenformat für TensorRT gebraucht. |
 

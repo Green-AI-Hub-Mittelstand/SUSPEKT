@@ -56,9 +56,11 @@
         <div class="workflow-card">
             <div class="workflow-step">4</div>
             <h3><i class="fas fa-rocket"></i> Modell einspielen</h3>
-            <p>Nur wenn das neue Modell besser ist: <code>.pt</code> in den
-               Modell-Ordner legen, <code>MODEL_NAME</code> umstellen, für den
-               Demonstrator TensorRT auf dem Jetson bauen.</p>
+            <p>Nur wenn das neue Modell besser ist: die <code>.pt</code>- und
+               <code>.onnx</code>-Datei unten im Bereich
+               <a href="#modell-einspielen">„Neues Modell einspielen“</a> per
+               Drag &amp; Drop hochladen — fertig. Alte Versionen bleiben
+               erhalten.</p>
         </div>
     </div>
 
@@ -92,13 +94,84 @@
             lädst du <strong>direkt im Browser hoch</strong> — Google Drive ist
             nicht nötig.</li>
         <li>Notebook Zelle für Zelle ausführen (GPU-Laufzeit wählen). Nur wenn
-            das Qualitäts-Gate bestanden ist, das neue <code>.pt</code> in
-            <code>webapp/model/</code> legen und <code>MODEL_NAME</code>
-            umstellen.</li>
+            das Qualitäts-Gate bestanden ist, die heruntergeladenen Dateien
+            (<code>.pt</code> und <code>.onnx</code>) unten im Bereich
+            „Neues Modell einspielen“ per Drag &amp; Drop hochladen.</li>
     </ol>
     <p class="ls-detail">Technische Details zum Export-Skript stehen in
        <a href="https://github.com/Green-AI-Hub-Mittelstand/SUSPEKT/blob/main/training/README.md"
           target="_blank" rel="noopener"><code>training/README.md</code></a>.</p>
+
+    <h2 id="schaeden">Schäden erkennen (Kratzer, Dellen, MDF-Platzer)</h2>
+    <p class="training-intro">
+        Drei Wege, die sich ergänzen — sortiert nach Aufwand:
+    </p>
+    <div class="workflow-grid">
+        <div class="workflow-card">
+            <div class="workflow-step">1</div>
+            <h3><i class="fas fa-traffic-light"></i> Verdachts-Ampel (sofort)</h3>
+            <p>Lernt <strong>nur aus Bildern unbeschädigter Teile</strong> —
+               kein einziges Fehlerbild nötig. Auffällige Bauteile bekommen im
+               Erkennungs-Ergebnis den Hinweis „⚠ KI-Verdacht: bitte prüfen“.
+               Unten per Knopfdruck starten.</p>
+        </div>
+        <div class="workflow-card">
+            <div class="workflow-step">2</div>
+            <h3><i class="fas fa-tags"></i> Schadensmodell (Kreislauf)</h3>
+            <p>Fotos beschädigter Teile in
+               <code>training_captures/schaeden/</code> legen, im Projekt
+               „Schäden“ oben labeln, in Colab trainieren
+               (<code>MODELL_ZWECK = 'schaeden'</code>) und die
+               <code>.pt</code> unten hochladen — erkennt dann automatisch
+               <em>welcher</em> Schaden wo ist.</p>
+        </div>
+        <div class="workflow-card">
+            <div class="workflow-step">3</div>
+            <h3><i class="fas fa-flask"></i> Zu wenige Fehlerbilder?</h3>
+            <p>Aus wenigen echten Schadensfotos hunderte Trainingsbilder
+               erzeugen: <code>training/augment_defects.py</code>
+               (Cut-&amp;-Paste) oder <code>training/synthetic/</code>
+               (Rendern aus CAD, für Fortgeschrittene). Details in
+               <a href="https://github.com/Green-AI-Hub-Mittelstand/SUSPEKT/blob/main/docs/retraining/schaeden.md"
+                  target="_blank" rel="noopener">docs/retraining/schaeden.md</a>.</p>
+        </div>
+    </div>
+
+    <h3>Verdachts-Ampel: aus Gutbildern lernen</h3>
+    <p class="training-intro">
+        Die Ampel vergleicht jedes erkannte Bauteil mit den gelernten
+        Gutteilen seiner Klasse. Dafür braucht sie Bilder
+        <strong>unbeschädigter</strong> Teile im Ordner
+        <code>training_captures/komponenten/</code> — dieselben Bilder, die
+        auch fürs Labeln gesammelt werden. Nach neuen Bildern einfach neu
+        lernen lassen.
+    </p>
+    <div id="anomaly-status" class="ls-assistant">
+        <p class="ls-loading">Prüfe Verdachts-Ampel-Status …</p>
+    </div>
+    <div id="anomaly-progress" class="ls-progress" style="display:none;"></div>
+
+    <h2 id="modell-einspielen">Neues Modell einspielen</h2>
+    <p class="training-intro">
+        Am Ende des Colab-Notebooks lädst du zwei Dateien herunter:
+        <code>…weitertrainiert.pt</code> (für diese Webseite) und
+        <code>…weitertrainiert.onnx</code> (für den Jetson-Demonstrator).
+        Zieh beide einfach in das Feld — die neue <code>.pt</code>-Version
+        wird sofort aktiv. <strong>Alte Versionen werden nie gelöscht</strong>
+        und können unten jederzeit wieder aktiviert werden.
+    </p>
+    <div id="model-dropzone" class="model-dropzone" tabindex="0"
+         role="button" aria-label="Modelldateien hochladen">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p><strong>.pt- und .onnx-Datei hierher ziehen</strong><br>
+           oder klicken, um die Dateien auszuwählen</p>
+    </div>
+    <input type="file" id="model-file-input" accept=".pt,.onnx" multiple
+           style="display:none">
+    <div id="model-upload-list"></div>
+
+    <h3>Modell-Versionen</h3>
+    <div id="model-versions"><p class="ls-loading">Lade Versionen …</p></div>
 
     <details class="legacy-training">
         <summary>Lokales Training auf diesem Server (experimentell, nicht empfohlen)</summary>
@@ -252,6 +325,75 @@
     margin-top: 0.5rem;
 }
 .ls-progress .bar > div { height: 100%; background: #2196F3; width: 0; }
+.model-dropzone {
+    border: 2px dashed #90caf9;
+    border-radius: 10px;
+    background: #f5faff;
+    padding: 2.2rem 1.5rem;
+    text-align: center;
+    color: #456;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    margin-bottom: 1rem;
+}
+.model-dropzone i { font-size: 2.2rem; color: #2196F3; }
+.model-dropzone p { margin: 0.6rem 0 0; }
+.model-dropzone.dragover,
+.model-dropzone:hover { background: #e3f2fd; border-color: #2196F3; }
+.model-upload-item {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.92rem;
+}
+.model-upload-item .bar {
+    height: 8px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.4rem;
+}
+.model-upload-item .bar > div { height: 100%; background: #2196F3; width: 0; }
+.model-upload-item.ok { border-color: #a5d6a7; background: #f1f8e9; }
+.model-upload-item.err { border-color: #ef9a9a; background: #ffebee; }
+.model-upload-item .warn { color: #b26a00; display: block; margin-top: 0.3rem; }
+.model-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 0.92rem;
+}
+.model-table th, .model-table td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+.model-table th { background: #fafafa; }
+.model-table tr:last-child td { border-bottom: none; }
+.model-table code { word-break: break-all; }
+.badge-active {
+    background: #2e7d32;
+    color: #fff;
+    border-radius: 12px;
+    padding: 0.15rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.badge-onnx {
+    background: #eceff1;
+    color: #37474f;
+    border-radius: 12px;
+    padding: 0.15rem 0.7rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+.model-table-wrap { overflow-x: auto; }
 </style>
 {% endblock %}
 
@@ -302,13 +444,19 @@
                         continue;
                     }
                     if (!p.exists) {
-                        html += row(false, p.title, `Noch nicht eingerichtet (nutzt Modell ${p.model}).`,
+                        const modelHint = p.prelabel_possible
+                            ? `Noch nicht eingerichtet (nutzt Modell ${p.model}).`
+                            : 'Noch nicht eingerichtet (festes Label-Set, noch kein Modell nötig).';
+                        html += row(false, p.title, modelHint,
                             `<button class="ls-btn" onclick="runAction('/setup/${kind}', this)">Projekt anlegen</button>`);
                     } else {
+                        const importLabel = p.prelabel_possible
+                            ? 'Neue Bilder importieren &amp; vorlabeln'
+                            : 'Neue Bilder importieren (Vorschläge erst nach dem 1. Training)';
                         html += row(true, p.title,
                             `Projekt Nr. ${p.id}: ${p.tasks} Bilder, davon ${p.annotated} fertig gelabelt.
                              Neue Bilder in den Ordner <code>training_captures/${kind}/</code> legen.`,
-                            `<button class="ls-btn" onclick="startPrelabel('${kind}', this)">Neue Bilder importieren &amp; vorlabeln</button>
+                            `<button class="ls-btn" onclick="startPrelabel('${kind}', this)">${importLabel}</button>
                              <a class="ls-btn secondary" href="/training/labelstudio/export/${kind}">Datensatz für Colab (zip)</a>`);
                     }
                 }
@@ -368,6 +516,245 @@
     }
 
     refreshStatus();
+
+    // ---------- Modell-Upload (Drag & Drop) ----------
+    const dropzone = document.getElementById('model-dropzone');
+    const fileInput = document.getElementById('model-file-input');
+    const uploadList = document.getElementById('model-upload-list');
+    const versionsBox = document.getElementById('model-versions');
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener('change', () => {
+        handleModelFiles(fileInput.files);
+        fileInput.value = '';
+    });
+    ['dragover', 'dragenter'].forEach(ev => dropzone.addEventListener(ev, e => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    }));
+    ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+    }));
+    dropzone.addEventListener('drop', e => handleModelFiles(e.dataTransfer.files));
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g,
+            c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function handleModelFiles(files) {
+        for (const file of files) {
+            if (!/\.(pt|onnx)$/i.test(file.name)) {
+                addUploadItem(`„${escapeHtml(file.name)}“ übersprungen — bitte nur
+                    .pt- und .onnx-Dateien aus dem Colab-Notebook hochladen.`, 'err');
+                continue;
+            }
+            uploadModelFile(file);
+        }
+    }
+
+    function addUploadItem(html, cls) {
+        const item = document.createElement('div');
+        item.className = 'model-upload-item' + (cls ? ' ' + cls : '');
+        item.innerHTML = html;
+        uploadList.prepend(item);
+        return item;
+    }
+
+    function uploadModelFile(file) {
+        const item = addUploadItem(
+            `<i class="fas fa-spinner fa-spin"></i>
+             „${escapeHtml(file.name)}“ wird hochgeladen …
+             <div class="bar"><div></div></div>`);
+        const bar = item.querySelector('.bar > div');
+
+        const form = new FormData();
+        form.append('file', file);
+        form.append('kind', 'auto');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/training/models/upload');
+        xhr.upload.onprogress = e => {
+            if (e.lengthComputable) bar.style.width = Math.round(100 * e.loaded / e.total) + '%';
+        };
+        xhr.onerror = () => {
+            item.className = 'model-upload-item err';
+            item.innerHTML = `✘ „${escapeHtml(file.name)}“: Verbindung fehlgeschlagen —
+                bitte noch einmal versuchen.`;
+        };
+        xhr.onload = () => {
+            let data = {};
+            try { data = JSON.parse(xhr.responseText); } catch (e) {}
+            if (xhr.status >= 200 && xhr.status < 300) {
+                item.className = 'model-upload-item ok';
+                item.innerHTML = '✔ ' + escapeHtml(data.status || 'Hochgeladen.') +
+                    (data.warning ? `<span class="warn">⚠ ${escapeHtml(data.warning)}</span>` : '');
+                loadModelVersions();
+                refreshStatus();
+            } else {
+                item.className = 'model-upload-item err';
+                item.innerHTML = `✘ „${escapeHtml(file.name)}“: ` +
+                    escapeHtml(data.error || ('Fehler ' + xhr.status));
+            }
+        };
+        xhr.send(form);
+    }
+
+    async function loadModelVersions() {
+        try {
+            const response = await fetch('/training/models');
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+            if (!data.models.length) {
+                versionsBox.innerHTML = '<p class="ls-detail">Noch keine Modelle vorhanden.</p>';
+                return;
+            }
+            let rows = '';
+            for (const m of data.models) {
+                const kindTitle = data.kinds[m.kind] || m.kind;
+                const uploaded = m.uploaded
+                    ? new Date(m.uploaded).toLocaleString('de-DE',
+                        {dateStyle: 'medium', timeStyle: 'short'})
+                    : 'vorinstalliert';
+                let statusCell;
+                if (m.type !== 'pt') {
+                    statusCell = `<span class="badge-onnx">für Jetson</span>
+                        <a class="ls-btn secondary"
+                           href="/training/models/download/${encodeURIComponent(m.file)}">
+                           Herunterladen</a>`;
+                } else if (m.active) {
+                    statusCell = '<span class="badge-active">✔ Aktiv</span>';
+                } else {
+                    statusCell = `<button class="ls-btn"
+                        onclick="activateModel('${escapeHtml(m.file)}', '${escapeHtml(m.kind)}', this)">
+                        Aktivieren</button>`;
+                }
+                rows += `<tr>
+                    <td><code>${escapeHtml(m.file)}</code></td>
+                    <td>${escapeHtml(kindTitle)}</td>
+                    <td>${uploaded}</td>
+                    <td>${m.size_mb != null ? m.size_mb + ' MB' : ''}</td>
+                    <td>${statusCell}</td>
+                </tr>`;
+            }
+            versionsBox.innerHTML = `<div class="model-table-wrap">
+                <table class="model-table">
+                    <thead><tr><th>Datei</th><th>Einsatz</th><th>Hochgeladen</th>
+                    <th>Größe</th><th>Status</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table></div>`;
+        } catch (e) {
+            versionsBox.innerHTML =
+                `<p class="ls-bad">Versionen konnten nicht geladen werden: ${escapeHtml(e.message)}</p>`;
+        }
+    }
+
+    async function activateModel(file, kind, btn) {
+        if (!confirm(`„${file}“ als aktives Modell übernehmen?\n` +
+                     'Die aktuelle Version bleibt erhalten und kann jederzeit ' +
+                     'wieder aktiviert werden.')) return;
+        btn.disabled = true;
+        try {
+            const response = await fetch('/training/models/activate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({file, kind})
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+            alert(data.status);
+            refreshStatus();
+        } catch (e) {
+            alert(e.message);
+        }
+        loadModelVersions();
+    }
+
+    loadModelVersions();
+
+    // ---------- Verdachts-Ampel (Anomalie-Erkennung) ----------
+    const anomalyBox = document.getElementById('anomaly-status');
+    const anomalyProgressBox = document.getElementById('anomaly-progress');
+
+    async function anomalyApi(path, options) {
+        const response = await fetch('/training/anomaly' + path, options);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+        return data;
+    }
+
+    async function refreshAnomalyStatus() {
+        try {
+            const s = await anomalyApi('/status');
+            const classes = Object.keys(s.banks);
+            let html = '';
+            html += row(s.available_images > 0, 'Gutbilder vorhanden',
+                s.available_images > 0
+                    ? `${s.available_images} Bilder im Ordner <code>${s.source_dir}</code>.`
+                    : `Keine Bilder gefunden — Bilder unbeschädigter Teile in
+                       <code>${s.source_dir}</code> legen (mindestens 5, besser 50+).`);
+            html += row(classes.length > 0, 'Verdachts-Ampel',
+                classes.length > 0
+                    ? `Aktiv für ${classes.length} Bauteilklassen:
+                       ${classes.slice(0, 8).map(escapeHtml).join(', ')}${classes.length > 8 ? ' …' : ''}`
+                    : 'Noch nicht gelernt.',
+                `<button class="ls-btn" id="anomaly-train-btn"
+                         onclick="startAnomalyTraining(this)"
+                         ${s.available_images === 0 ? 'disabled' : ''}>
+                     ${classes.length > 0 ? 'Neu lernen (nach neuen Bildern)' : 'Aus Gutbildern lernen'}
+                 </button>`);
+            html += row(!!s.damage_model, 'Schadensmodell',
+                s.damage_model
+                    ? `Aktiv: <code>${escapeHtml(s.damage_model)}</code> — erkannte Schäden
+                       setzen den Zustand im Ergebnis automatisch.`
+                    : `Noch keines hochgeladen — über das Projekt „Schäden“ oben
+                       trainieren oder mit <code>training/augment_defects.py</code> starten.`);
+            anomalyBox.innerHTML = html;
+            if (s.progress && s.progress.state === 'running') {
+                showAnomalyProgress(s.progress);
+                pollAnomalyProgress();
+            }
+        } catch (e) {
+            anomalyBox.innerHTML =
+                `<p class="ls-bad">Status konnte nicht geladen werden: ${escapeHtml(e.message)}</p>`;
+        }
+    }
+
+    function showAnomalyProgress(p) {
+        anomalyProgressBox.style.display = 'block';
+        anomalyProgressBox.className = 'ls-progress' + (p.state === 'error' ? ' error' : '');
+        const percent = p.total ? Math.round(100 * p.done / p.total) : 0;
+        anomalyProgressBox.innerHTML = p.message +
+            (p.total ? ` (${p.done}/${p.total})<div class="bar"><div style="width:${percent}%"></div></div>` : '');
+    }
+
+    let anomalyPolling = false;
+    async function pollAnomalyProgress() {
+        if (anomalyPolling) return;
+        anomalyPolling = true;
+        try {
+            for (;;) {
+                const p = await anomalyApi('/progress');
+                showAnomalyProgress(p);
+                if (p.state !== 'running') break;
+                await new Promise(r => setTimeout(r, 2000));
+            }
+        } finally { anomalyPolling = false; refreshAnomalyStatus(); }
+    }
+
+    async function startAnomalyTraining(btn) {
+        btn.disabled = true;
+        try {
+            await anomalyApi('/train', {method: 'POST'});
+            pollAnomalyProgress();
+        } catch (e) { alert(e.message); btn.disabled = false; }
+    }
+
+    refreshAnomalyStatus();
 
     // ---------- Legacy: lokales Training ----------
     const loading = document.getElementById('loading');
