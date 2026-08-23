@@ -8,6 +8,7 @@ system180-env
 
 data
 labelstudio-data
+neo4j-data
 training_captures
 config
 static/detected_images
