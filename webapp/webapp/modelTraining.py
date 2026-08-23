@@ -2,35 +2,74 @@ import json
 import os
 import random
 import shutil
+import sys
 import urllib.parse
+from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from ultralytics import YOLO
+
+from .auth import is_admin
+from .modelRegistry import adopt_trained_model, get_active_model_path
 
 router = APIRouter(prefix="/training")
 templates = Jinja2Templates(directory="templates")
 
 load_dotenv()
-LABEL_STUDIO_API_URL = os.getenv("LABEL_STUDIO_API_URL").format(id=os.getenv("PROJECT_ID"))
+PROJECT_ID = os.getenv("PROJECT_ID", "1")
+LABEL_STUDIO_API_URL = os.getenv(
+    "LABEL_STUDIO_API_URL",
+    "http://localhost:8082/api/projects/{id}/export?exportType=JSON",
+).format(id=PROJECT_ID)
 LABEL_STUDIO_API_KEY = os.getenv("LABEL_STUDIO_API_KEY")
+# Base URL of the Label Studio UI for the admin page; falls back to the
+# scheme+host of the API URL so a single .env entry is enough.
+LABEL_STUDIO_BASE_URL = os.getenv("LABEL_STUDIO_BASE_URL") or urllib.parse.urlsplit(
+    LABEL_STUDIO_API_URL)._replace(path="", query="", fragment="").geturl()
+COLAB_NOTEBOOK_URL = (
+    "https://colab.research.google.com/github/Green-AI-Hub-Mittelstand/SUSPEKT/"
+    "blob/main/notebooks/SUSPEKT_YOLO_Weitertraining_Colab.ipynb"
+)
 
 YOLO_DATASET_DIR = "yolo_dataset"
 IMAGES_DIR = os.path.join(YOLO_DATASET_DIR, "images")
 LABELS_DIR = os.path.join(YOLO_DATASET_DIR, "labels")
 DATA_YAML = os.path.join(YOLO_DATASET_DIR, "data.yaml")
-MODEL_NAME = os.getenv("MODEL_NAME", "my_custom_model.pt")
 
-MODEL_PATH = os.path.join("model", MODEL_NAME)
-RUNS_DIR = "C:/runs/detect"
+
+def _default_runs_dir() -> str:
+    """Directory where ultralytics saves training runs (…/runs/detect)."""
+    try:
+        from ultralytics import settings as yolo_settings
+        return os.path.join(yolo_settings["runs_dir"], "detect")
+    except Exception:
+        return os.path.join("runs", "detect")
+
+
+def _default_label_studio_media_dir() -> str:
+    """Label Studio's default upload dir (appdirs user data dir per platform)."""
+    home = os.path.expanduser("~")
+    if sys.platform == "win32":
+        base = os.getenv("LOCALAPPDATA", os.path.join(home, "AppData", "Local"))
+        data_dir = os.path.join(base, "label-studio", "label-studio")
+    elif sys.platform == "darwin":
+        data_dir = os.path.join(home, "Library", "Application Support", "label-studio")
+    else:
+        base = os.getenv("XDG_DATA_HOME", os.path.join(home, ".local", "share"))
+        data_dir = os.path.join(base, "label-studio")
+    return os.path.join(data_dir, "media", "upload")
+
+
+RUNS_DIR = os.getenv("RUNS_DIR", _default_runs_dir())
 TRAIN_RATIO = 0.8
 ANNOTATIONS_FILE = "annotations.json"
 TRAINED_IMAGES_FILE = "trained_images.json"
-user_home = os.path.expanduser("~")
-LABEL_STUDIO_MEDIA_DIR = os.path.join(user_home, "AppData", "Local", "label-studio", "label-studio", "media", "upload")
+LABEL_STUDIO_MEDIA_DIR = os.getenv(
+    "LABEL_STUDIO_MEDIA_DIR", _default_label_studio_media_dir())
 training_in_progress = False
 
 
@@ -184,7 +223,8 @@ names: {list(label_map.keys())}
     """
             yaml_file.write(yaml_content.strip())
 
-        model = YOLO(MODEL_PATH if os.path.exists(MODEL_PATH) else "yolov8n.pt")
+        base_model_path = get_active_model_path("komponenten")
+        model = YOLO(base_model_path if os.path.exists(base_model_path) else "yolov8n.pt")
         model.train(data=DATA_YAML, epochs=10, imgsz=640)
 
         latest_training_folder = get_latest_training_folder(RUNS_DIR)
@@ -196,16 +236,23 @@ names: {list(label_map.keys())}
 
         # Check if the best model exists, otherwise use last model
         if os.path.exists(best_model_path):
-            print(f"Best model found at {best_model_path}, copying to {MODEL_PATH}")
-            shutil.copy(best_model_path, MODEL_PATH)
+            trained_path = best_model_path
         elif os.path.exists(last_model_path):
-            print(f"Best model not found, using last model at {last_model_path}, copying to {MODEL_PATH}")
-            shutil.copy(last_model_path, MODEL_PATH)
+            print(f"Best model not found, using last model at {last_model_path}")
+            trained_path = last_model_path
         else:
             print("Neither best nor last model found in the training folder.")
             return {"error": "No model found for saving, training might have failed."}
 
-        return {"status": "Training complete!", "model_saved_at": MODEL_PATH}
+        # Store as a NEW version and activate it — old versions are kept and
+        # can be re-activated on the /training page.
+        new_name = adopt_trained_model(
+            "komponenten", trained_path,
+            f"{datetime.now():%y%m%d}_komponenten_lokal.pt")
+        print(f"Trained model stored and activated as model/{new_name}")
+
+        return {"status": "Training complete!",
+                "model_saved_at": os.path.join("model", new_name)}
 
     except Exception as e:
         print(f"Error in training: {e}")
@@ -217,12 +264,21 @@ names: {list(label_map.keys())}
 
 @router.get("", response_class=HTMLResponse)
 async def training_index(request: Request):
-    """Render the image upload page"""
-    return templates.TemplateResponse("training.html", {"request": request})
+    """Render the training & labeling admin page"""
+    if not is_admin(request):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("training.html", {
+        "request": request,
+        "label_studio_url": LABEL_STUDIO_BASE_URL,
+        "project_id": PROJECT_ID,
+        "colab_url": COLAB_NOTEBOOK_URL,
+    })
 
 
 @router.post("/train")
-async def train_model():
-    """Trigger the training process"""
+async def train_model(request: Request):
+    """Trigger the (legacy, local) training process"""
+    if not is_admin(request):
+        return {"error": "Nur für eingeloggte Admins."}
     status = start_training()
     return status

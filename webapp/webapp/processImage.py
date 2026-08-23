@@ -13,7 +13,9 @@ from PIL import Image
 
 
 from .class_properties import CLASS_PROPERTIES
-from .config import model1, model2, color_detection_classes, beschichtung_detection_classes
+from . import config
+from .config import color_detection_classes, beschichtung_detection_classes
+from .damageDetection import inspect_crop
 from .decorDetection import UnidekorDetector
 from .measurement import calculate_pixel_to_mm_ratio, calculate_straight_lengths, reference_values
 from .trainingDataCollector import TrainingDataCollector
@@ -81,8 +83,8 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
             #image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
 
             # 📌 **YOLO Vorhersage mit zwei Modellen**
-            results1 = model1.predict(image, save=False, conf=class_confidence)
-            results2 = model2.predict(image, save=False, conf=class_confidence)
+            results1 = config.model1.predict(image, save=False, conf=class_confidence)
+            results2 = config.model2.predict(image, save=False, conf=class_confidence)
 
             # 📌 **Ensemble-Methode kombiniert beide YOLO Ergebnisse**
             final_boxes, final_scores, final_classes = ensemble_predictions(results1, results2)
@@ -121,6 +123,15 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                     "zustand": "Unbekannt",
                 })
 
+                # 📌 Schadensprüfung auf dem Crop: Schadensmodell (falls
+                # hochgeladen) + Verdachts-Ampel (falls Gutteil-Banks trainiert)
+                zustand = properties.get("zustand", "Unbekannt")
+                reusable = True
+                inspection = inspect_crop(class_name, crop)
+                if inspection["zustand"]:
+                    zustand = inspection["zustand"]
+                    reusable = False
+
                 farbe = None
 
 
@@ -151,9 +162,12 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                     "maße": None,
                     "farbe": farbe,
                     "typ": properties.get("typ", "Unbekannt"),
-                    "zustand": properties.get("zustand", "Unbekannt"),
+                    "zustand": zustand,
+                    "zustand_conf": inspection["zustand_conf"],
+                    "verdacht": inspection["verdacht"],
+                    "anomalie_score": inspection["anomalie_score"],
                     "gewicht": properties.get("gewicht", "Nicht verfügbar"),
-                    "reusable": True,
+                    "reusable": reusable,
                     "ansicht": view,  # Neue Spalte für die Bildansicht
                     "capture_type": capture_type
                 })

@@ -468,6 +468,12 @@
         color: #d32f2f;
     }
 
+    /* KI-Verdachts-Ampel: Teil weicht von den gelernten Gutteilen ab */
+    .condition-suspect {
+        background-color: #fff3e0;
+        color: #e65100;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
         .results-grid {
@@ -617,6 +623,12 @@
                                         {% else %}
                                             <span class="condition-badge condition-damaged">Beschädigt</span>
                                         {% endif %}
+                                        {% if obj.zustand_conf %}
+                                            <span class="condition-badge condition-damaged">KI: {{ "%.0f"|format(obj.zustand_conf * 100) }}%</span>
+                                        {% endif %}
+                                        {% if obj.verdacht %}
+                                            <span class="condition-badge condition-suspect">⚠ KI-Verdacht: bitte prüfen</span>
+                                        {% endif %}
                                     </div>
                                     <form class="condition-form" onsubmit="updateCondition(event, this)">
                                         <input type="hidden" name="filename" value="{{ filename }}">
@@ -624,10 +636,10 @@
                                         <input type="hidden" name="reusable" id="reusable_{{ obj.bbox_id }}" value="{{ 'true' if obj.reusable else 'false' }}">
 
                                         <select name="zustand" class="condition-select" onchange="handleConditionChange(this, '{{ obj.bbox_id }}')">
-                                            <option value="unbeschädigt" selected>Unbeschädigt</option>
-                                            <option value="MDF-Platzer">MDF-Platzer</option>
-                                            <option value="Rohr_Kratzer">Rohr-Kratzer</option>
-                                            <option value="Delle">Delle</option>
+                                            <option value="unbeschädigt" {% if obj.zustand not in ["MDF-Platzer", "Rohr_Kratzer", "Delle"] %}selected{% endif %}>Unbeschädigt</option>
+                                            <option value="MDF-Platzer" {% if obj.zustand == "MDF-Platzer" %}selected{% endif %}>MDF-Platzer</option>
+                                            <option value="Rohr_Kratzer" {% if obj.zustand == "Rohr_Kratzer" %}selected{% endif %}>Rohr-Kratzer</option>
+                                            <option value="Delle" {% if obj.zustand == "Delle" %}selected{% endif %}>Delle</option>
                                         </select>
 
                                         <button type="button" class="ki-button" onclick="openKIModal('{{ obj.class }}', '{{ obj.bbox_id }}', '{{ obj.crop_path }}', '{{ filename }}')">

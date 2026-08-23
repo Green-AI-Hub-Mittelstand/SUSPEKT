@@ -25,9 +25,16 @@ PROCESSED_DIR = Path("processed")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-# Load YOLO model
-MODEL = "model/system180custommodel_v1.pt"
-model = YOLO(MODEL)
+# Load the active komponenten model from the registry; reload_model() is
+# called when a new version is activated on the /training page.
+from .modelRegistry import get_active_model_path
+
+model = YOLO(get_active_model_path("komponenten"))
+
+
+def reload_model():
+    global model
+    model = YOLO(get_active_model_path("komponenten"))
 
 
 @router.get("", response_class=HTMLResponse)

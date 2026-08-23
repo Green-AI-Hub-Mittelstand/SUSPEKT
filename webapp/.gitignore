@@ -1,11 +1,15 @@
 .idea
 .venv
 system180-env
+.env
 *.egg-info
 *.db
 *.sqlite3
 
 data
+labelstudio-data
+training_captures
+config
 static/detected_images
 __pycache__/
 uploads

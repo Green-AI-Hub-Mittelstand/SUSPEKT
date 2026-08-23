@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Request, Form, Depends
+from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
 
 templates = Jinja2Templates(directory="templates")
 router = APIRouter()
@@ -9,8 +8,12 @@ router = APIRouter()
 USERNAME = "gaih"
 PASSWORD = "gaih"
 
-def is_admin(request: Request):
-    return request.session.get("user") == "gaih"
+# Single source of truth for the admin session marker. Templates check the
+# same value inline via request.session.get('user') == 'admin'.
+ADMIN_SESSION_VALUE = "admin"
+
+def is_admin(request: Request) -> bool:
+    return request.session.get("user") == ADMIN_SESSION_VALUE
 
 @router.get("/admin-only", response_class=HTMLResponse)
 @router.get("/login")
@@ -20,7 +23,7 @@ def login_form(request: Request):
 @router.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
     if username == USERNAME and password == PASSWORD:
-        request.session["user"] = "admin"
+        request.session["user"] = ADMIN_SESSION_VALUE
         return RedirectResponse("/", status_code=302)
     return templates.TemplateResponse("login.html", {
         "request": request,
