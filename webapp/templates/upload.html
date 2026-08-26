@@ -1,511 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}🌍 System 180 – Home Objekterkennung{% endblock %}
-
-{% block extra_css %}
-<style>
-/* Hauptcontainer Styling */
-.detection-app {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #333;
-    background-color: #f5f7fa;
-    min-height: 100vh;
-}
-
-/* Header Styling */
-.header-section {
-    width: 100%;
-    margin-bottom: 2rem;
-}
-
-.header-image-container {
-    position: relative;
-    height: 300px;
-    overflow: hidden;
-}
-
-.header-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.header-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7));
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 0 1rem;
-}
-
-.header-title {
-    color: white;
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
-
-.header-subtitle {
-    color: rgba(255,255,255,0.9);
-    font-size: 1.2rem;
-    max-width: 600px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Content Container */
-.content-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem 2rem;
-}
-
-/* Info Card */
-.info-card {
-    display: flex;
-    align-items: center;
-    background-color: #e0f2ff;
-    border-left: 4px solid #2196F3;
-    border-radius: 4px;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.info-icon {
-    color: #2196F3;
-    font-size: 1.5rem;
-    margin-right: 1rem;
-}
-
-.info-content p {
-    margin: 0;
-}
-
-/* Symmetry Selection */
-.symmetry-selection {
-    background-color: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.symmetry-selection h3 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    color: #333;
-}
-
-.symmetry-options {
-    display: flex;
-    flex-direction: row; /* Changed from column to row */
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    justify-content: space-between; /* Distribute items evenly */
-}
-
-.symmetry-option {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 0.75rem 1.25rem;
-    background-color: #f5f7fa;
-    border-radius: 6px;
-    transition: background-color 0.2s;
-    border: 2px solid transparent;
-    flex: 1;
-    min-width: 200px;
-}
-
-.symmetry-option:hover {
-    background-color: #e8f4fd;
-}
-
-.symmetry-option input {
-    margin-right: 0.5rem;
-}
-
-.option-text {
-    font-weight: 500;
-    margin-right: 0.5rem;
-}
-
-.option-description {
-    color: #666;
-    font-size: 0.9rem;
-}
-
-/* Image Preview Grid */
-.image-preview-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.image-card {
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-}
-
-.image-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-}
-
-.image-preview {
-    height: 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f5f7fa;
-    overflow: hidden;
-    position: relative;
-}
-
-.image-preview i {
-    font-size: 3rem;
-    color: #ccd4e0;
-}
-
-.image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.card-content {
-    padding: 1rem;
-    border-top: 1px solid #eee;
-}
-
-.file-name {
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-}
-
-.view-selection, .view-selection-camera {
-    width: 100%;
-}
-
-.view-dropdown, #camera-view-dropdown {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: white;
-    font-size: 0.9rem;
-}
-
-.remove-image {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    width: 25px;
-    height: 25px;
-    background-color: rgba(255, 0, 0, 0.7);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1rem;
-    z-index: 2;
-    transition: background-color 0.2s;
-}
-
-.remove-image:hover {
-    background-color: rgba(255, 0, 0, 0.9);
-}
-
-/* Button Container */
-.button-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    justify-content: center;
-}
-
-.btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: background-color 0.2s, transform 0.1s;
-    flex: 1; /* Make buttons take equal width */
-    justify-content: center;
-    min-width: 160px;
-    max-width: 280px;
-}
-
-.btn:active {
-    transform: scale(0.98);
-}
-
-.btn i {
-    font-size: 1rem;
-}
-
-.btn-primary {
-    background-color: #2196F3;
-    color: white;
-}
-
-.btn-primary:hover {
-    background-color: #1976D2;
-}
-
-.btn-secondary {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #388E3C;
-}
-
-.btn-success {
-    background-color: #673AB7;
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #512DA8;
-}
-
-.btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-/* Feature Cards */
-.features-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-top: 3rem;
-}
-
-.feature-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    text-align: center;
-    transition: transform 0.2s;
-}
-
-.feature-card:hover {
-    transform: translateY(-5px);
-}
-
-.feature-icon {
-    width: 60px;
-    height: 60px;
-    background-color: #f0f4f8;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-}
-
-.feature-icon i {
-    font-size: 1.5rem;
-    color: #2196F3;
-}
-
-.feature-card h3 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-    color: #333;
-}
-
-.feature-card p {
-    color: #666;
-    margin: 0;
-}
-
-/* Modal Styling */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.8);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    width: 90%;
-    max-width: 800px;
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    background-color: #f5f7fa;
-    border-bottom: 1px solid #eee;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
-}
-
-.close-modal {
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.2s;
-}
-
-.close-modal:hover {
-    color: #000;
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
-
-#camera-stream {
-    width: 100%;
-    max-height: 60vh;
-    object-fit: cover;
-    border-radius: 4px;
-    margin-bottom: 1.5rem;
-    background-color: #000;
-}
-
-.camera-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.image-counter {
-    padding: 0.5rem 1rem;
-    background-color: #f5f7fa;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: 500;
-}
-
-.camera-buttons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.view-selection-camera {
-    margin-bottom: 1rem;
-}
-
-/* Loading Animation */
-#loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255,255,255,0.9);
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1100;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #2196F3;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-#loading p {
-    margin-top: 1rem;
-    font-weight: 500;
-}
-
-/* Responsive Anpassungen */
-@media (max-width: 768px) {
-    .header-title {
-        font-size: 2rem;
-    }
-
-    .header-subtitle {
-        font-size: 1rem;
-    }
-
-    .button-container {
-        flex-direction: column;
-    }
-
-    .button-container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .btn {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .symmetry-options {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .header-image-container {
-        height: 200px;
-    }
-}
-</style>
-
-{% endblock %}
+{% block title %}System 180 – Home Objekterkennung{% endblock %}
 
 {% block content %}
 <div class="detection-app">
@@ -528,6 +23,10 @@
             </div>
             <div class="info-content">
                 <p>Laden Sie bis zu 4 Bilder hoch oder verwenden Sie die Kamera, um System180-Komponenten automatisch zu erkennen.</p>
+                <p class="beispiel-hinweis">
+                    Noch keine eigenen Aufnahmen? <button type="button" id="alle-beispiele-btn" class="beispiel-link">Beispielregal laden</button>
+                    – vier Ansichten zum Ausprobieren.
+                </p>
             </div>
         </div>
 
@@ -547,6 +46,10 @@
                     </div>
                     <div class="card-content">
                         <p class="file-name">Bild hochladen</p>
+                        <p class="upload-hint">Tippen zum Auswählen</p>
+                        <button type="button" class="beispiel-button" data-beispiel="{{ i }}">
+                            <span></span>
+                        </button>
                         <!-- View-Auswahl Dropdown (anfangs ausgeblendet) -->
                         <div class="view-selection" style="display: none;">
                             <select class="view-dropdown">
@@ -568,18 +71,24 @@
                 <h3>Wählen Sie den Aufnahmetyp aus:</h3>
                 <div class="symmetry-options">
                     <label class="symmetry-option">
-                        <input type="radio" name="capture_type" value="symmetric">
-                        <span class="option-text">Symmetrisch</span>
+                        <span class="option-row">
+                            <input type="radio" name="capture_type" value="symmetric">
+                            <span class="option-text">Symmetrisch</span>
+                        </span>
                         <span class="option-description">(benötigt nur Vorder- und eine Seitenansicht)</span>
                     </label>
                     <label class="symmetry-option">
-                        <input type="radio" name="capture_type" value="asymmetric">
-                        <span class="option-text">Asymmetrisch</span>
+                        <span class="option-row">
+                            <input type="radio" name="capture_type" value="asymmetric">
+                            <span class="option-text">Asymmetrisch</span>
+                        </span>
                         <span class="option-description">(benötigt Ansichten von allen Seiten)</span>
                     </label>
                     <label class="symmetry-option">
-                        <input type="radio" name="capture_type" value="single" checked>
-                        <span class="option-text">Einzelaufnahme</span>
+                        <span class="option-row">
+                            <input type="radio" name="capture_type" value="single" checked>
+                            <span class="option-text">Einzelaufnahme</span>
+                        </span>
                         <span class="option-description">(Ansicht ist egal)</span>
                     </label>
                 </div>
@@ -851,6 +360,90 @@ function updateRequiredViews() {
 updateViewOptions();
 updateRequiredViews();
 
+// ---------------------------------------------------------------
+// Beispielbilder zum Ausprobieren
+//
+// Die Karten bleiben in erster Linie Upload-Flächen: ein Klick öffnet weiterhin
+// die Dateiauswahl. Der Beispiel-Knopf darin ist eine zweite, klar getrennte
+// Möglichkeit und stoppt deshalb die Weitergabe des Klicks.
+// ---------------------------------------------------------------
+const BEISPIELBILDER = [
+    { datei: '/static/samples/Regal Front.jpg', ansicht: 'front', label: 'Vorderansicht' },
+    { datei: '/static/samples/Regal Left.jpg',  ansicht: 'left',  label: 'Linke Seite' },
+    { datei: '/static/samples/Regal Right.jpg', ansicht: 'right', label: 'Rechte Seite' },
+    { datei: '/static/samples/Regal Back.jpg',  ansicht: 'back',  label: 'Rückansicht' },
+];
+
+// Beschriftung der Beispiel-Knöpfe setzen (im Markup absichtlich leer).
+function beschrifteBeispielKnoepfe() {
+    document.querySelectorAll('.beispiel-button').forEach(knopf => {
+        const beispiel = BEISPIELBILDER[Number(knopf.dataset.beispiel)];
+        const text = knopf.querySelector('span');
+        if (beispiel && text) text.textContent = 'Beispiel: ' + beispiel.label;
+        knopf.hidden = !beispiel;
+    });
+}
+
+async function ladeBeispiel(index) {
+    const beispiel = BEISPIELBILDER[index];
+    if (!beispiel) return false;
+
+    // Nicht zweimal dasselbe Bild aufnehmen.
+    const name = decodeURIComponent(beispiel.datei.split('/').pop());
+    if (storedFiles.some(datei => datei.name === name)) return false;
+    if (storedFiles.length >= 4) {
+        alert('Maximale Anzahl von 4 Bildern erreicht!');
+        return false;
+    }
+
+    const antwort = await fetch(beispiel.datei);
+    if (!antwort.ok) throw new Error('Beispielbild nicht erreichbar: ' + beispiel.datei);
+    const blob = await antwort.blob();
+    const datei = new File([blob], name, { type: blob.type || 'image/jpeg' });
+
+    // Ansicht vorbelegen, damit das Beispiel sofort stimmig ist.
+    imageViews[name] = beispiel.ansicht;
+    addImageToFileInput(datei);
+    updateImageCount();
+    return true;
+}
+
+// Klicks auf die Beispiel-Knöpfe über den Grid-Container abfangen: die Karten
+// werden beim Aktualisieren neu aufgebaut, feste Listener gingen dabei verloren.
+document.querySelector('.image-preview-grid').addEventListener('click', async function(e) {
+    const knopf = e.target.closest('.beispiel-button');
+    if (!knopf) return;
+    e.stopPropagation();
+    try {
+        await ladeBeispiel(Number(knopf.dataset.beispiel));
+    } catch (fehler) {
+        console.error(fehler);
+        alert('Beispielbild konnte nicht geladen werden.');
+    }
+});
+
+// Alle vier Ansichten auf einmal - dazu passt der Aufnahmetyp "Asymmetrisch".
+document.getElementById('alle-beispiele-btn').addEventListener('click', async function() {
+    const asymmetrisch = document.querySelector('input[name="capture_type"][value="asymmetric"]');
+    if (asymmetrisch && !asymmetrisch.checked) {
+        asymmetrisch.checked = true;
+        asymmetrisch.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    this.disabled = true;
+    try {
+        for (let i = 0; i < BEISPIELBILDER.length; i++) {
+            await ladeBeispiel(i);
+        }
+    } catch (fehler) {
+        console.error(fehler);
+        alert('Beispielbilder konnten nicht geladen werden.');
+    } finally {
+        this.disabled = false;
+    }
+});
+
+beschrifteBeispielKnoepfe();
+
 // Event Listener für die Cards
 document.querySelectorAll('.image-card').forEach(card => {
     card.addEventListener('click', function() {
@@ -1108,7 +701,6 @@ function updateImageCount() {
     }
 }
 // Event listener for modal analyze button
-m// Event listener for modal analyze button
 modalAnalyzeBtn.addEventListener('click', function() {
     // Bei Einzelaufnahme automatisch "any" für alle Bilder setzen
     if (captureType === 'single') {
@@ -1228,12 +820,17 @@ function updatePreviewCards(files) {
 
             reader.readAsDataURL(file);
         } else {
+            const beispiel = BEISPIELBILDER[index];
             card.innerHTML = `
                 <div class="image-preview">
                     <i class="fas fa-image"></i>
                 </div>
                 <div class="card-content">
                     <p class="file-name">Bild hochladen</p>
+                    <p class="upload-hint">Tippen zum Auswählen</p>
+                    ${beispiel ? `<button type="button" class="beispiel-button" data-beispiel="${index}">
+                        <span>Beispiel: ${beispiel.label}</span>
+                    </button>` : ''}
                     <div class="view-selection" style="display: none;">
                         <select class="view-dropdown">
                             <option value="" disabled selected>Ansicht wählen</option>

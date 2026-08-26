@@ -111,6 +111,127 @@ CLASS_PROPERTIES = {
         "maße": "455x170 mm",
         "typ": "Auszug",
         "zustand": "unbeschädigt"
-    }
+    },
+
+    # --- Flächen und Möbelteile ohne festes Einzelmaß ---
+    # Ihre Maße ergeben sich aus dem Rasterfeld, das sie ausfüllen, und werden
+    # in measurement.py aus den umliegenden Streben abgeleitet.
+    "Fachboden": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Fachboden",
+        "zustand": "unbeschädigt"
+    },
+    "Fachboden mit Verstaerkung": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Fachboden",
+        "zustand": "unbeschädigt"
+    },
+    "Kombifront": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Front",
+        "zustand": "unbeschädigt"
+    },
+    "Magazin": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Magazin",
+        "zustand": "unbeschädigt"
+    },
+    "Seitenverkleidung": {
+        "gewicht": "450-650 g",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Verkleidung",
+        "zustand": "unbeschädigt"
+    },
+    # Schreibweisen des zweiten Modells - gleiche Bauteile, andere Benennung.
+    "Seitenverkleidung - 0/0": {
+        "gewicht": "450-650 g",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Verkleidung",
+        "zustand": "unbeschädigt"
+    },
+    "Seitenverkleidung - 0/IN": {
+        "gewicht": "450-650 g",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Verkleidung",
+        "zustand": "unbeschädigt"
+    },
+    "Seitenverkleidung - IN/IN": {
+        "gewicht": "450-650 g",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Verkleidung",
+        "zustand": "unbeschädigt"
+    },
+    "Dekor": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "to be calculated",
+        "typ": "Oberfläche",
+        "zustand": "unbeschädigt"
+    },
+
+    # --- Füße und Rollen (Maße aus dem Katalog, Seite 16/17) ---
+    "Rolle": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "vernickelt",
+        "maße": "75x120 mm",
+        "typ": "Lenkrolle",
+        "zustand": "unbeschädigt"
+    },
+    "Winkelfuss": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "vernickelt",
+        "maße": "20 mm",
+        "typ": "Möbelfuß",
+        "zustand": "unbeschädigt"
+    },
+    "Verbindungswinkel": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "edelstahl",
+        "maße": "Nicht verfügbar",
+        "typ": "Verbinder",
+        "zustand": "unbeschädigt"
+    },
+
+    # --- Ganze Möbel: kein Einzelbauteil, deshalb ohne Maß ---
+    "Regal": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "Nicht verfügbar",
+        "typ": "Möbel",
+        "zustand": "unbeschädigt"
+    },
+    "Sideboard": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "Nicht verfügbar",
+        "typ": "Möbel",
+        "zustand": "unbeschädigt"
+    },
+    "Tisch": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "Nicht verfügbar",
+        "typ": "Möbel",
+        "zustand": "unbeschädigt"
+    },
+    "Tresen": {
+        "gewicht": "Nicht verfügbar",
+        "farbe": "to be detected",
+        "maße": "Nicht verfügbar",
+        "typ": "Möbel",
+        "zustand": "unbeschädigt"
+    },
     # Weitere Klassen können hier hinzugefügt werden
 }

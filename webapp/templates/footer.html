@@ -2,30 +2,36 @@
     <div class="footer-container">
         <div class="footer-main">
             <div class="footer-brand">
-                <img src="/static/logosystem180.png" alt="System180 Logo" class="footer-logo">
+                <a href="https://www.system180.com/" target="_blank" rel="noopener noreferrer">
+                    <img src="/static/logosystem180.png" alt="System180 Logo" class="footer-logo">
+                </a>
                 <p class="tagline">Made in Berlin</p>
             </div>
 
             <div class="footer-links">
                 <div class="footer-links-group">
                     <h3>Unternehmen</h3>
-                    <a href="#">Über uns</a>
-                    <a href="#">Kontakt</a>
-                    <a href="#">Karriere</a>
+                    <a href="https://www.system180.com/unternehmen/" target="_blank" rel="noopener noreferrer">Über uns</a>
+                    <a href="https://www.system180.com/kontakt/" target="_blank" rel="noopener noreferrer">Kontakt</a>
+                    <a href="https://jobs.system180.com/de" target="_blank" rel="noopener noreferrer">Karriere</a>
+                    <a href="https://www.system180.com/nachhaltigkeit/" target="_blank" rel="noopener noreferrer">Nachhaltigkeit</a>
                 </div>
 
                 <div class="footer-links-group">
                     <h3>Produkte</h3>
-                    <a href="#">Möbelsysteme</a>
-                    <a href="#">Raumsysteme</a>
-                    <a href="#">Konstruktionen</a>
+                    <a href="https://www.system180.com/moebel/" target="_blank" rel="noopener noreferrer">Möbelsysteme</a>
+                    <a href="https://www.system180.com/raumsysteme/" target="_blank" rel="noopener noreferrer">Raumsysteme</a>
+                    <a href="https://www.system180.com/bausystem/" target="_blank" rel="noopener noreferrer">Konstruktionen</a>
+                    <a href="https://www.system180.com/produkte/" target="_blank" rel="noopener noreferrer">Alle Produkte</a>
                 </div>
 
                 <div class="footer-links-group">
                     <h3>Service</h3>
-                    <a href="#">Digitales Lager</a>
-                    <a href="#">Ressourceneffizienz</a>
-                    <a href="#">Training</a>
+                    <a href="/inventory">Digitales Lager</a>
+                    <a href="/resource">Ressourceneffizienz</a>
+                    {% if request.session.get('user') == 'admin' %}
+                    <a href="/training">Training</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -35,11 +41,11 @@
                 © 2025 System180. Alle Rechte vorbehalten.
             </div>
             <div class="secondary-links">
-                <a href="#">Datenschutz</a>
+                <a href="https://www.system180.com/datenschutz/" target="_blank" rel="noopener noreferrer">Datenschutz</a>
                 <span class="separator">|</span>
-                <a href="#">Impressum</a>
+                <a href="https://www.system180.com/impressum/" target="_blank" rel="noopener noreferrer">Impressum</a>
                 <span class="separator">|</span>
-                <a href="#">AGB</a>
+                <a href="https://www.system180.com/agb/" target="_blank" rel="noopener noreferrer">AGB</a>
             </div>
             <div class="powered-by">
                 Powered by Green AI Hub Mittelstand
@@ -50,10 +56,11 @@
 
 <style>
     .site-footer {
-        background-color: #263238;
-        color: #e0e0e0;
+        background-color: #000000;
+        color: #cccccc;
         padding: 3rem 0 1.5rem;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin-top: 2rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
 
     .footer-container {
@@ -102,14 +109,16 @@
     }
 
     .footer-links-group h3 {
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
         margin: 0 0 1rem;
-        color: #90CAF9;
+        color: #ffffff;
     }
 
     .footer-links-group a {
-        color: #e0e0e0;
+        color: #cccccc;
         text-decoration: none;
         margin-bottom: 0.7rem;
         font-size: 0.95rem;
@@ -117,7 +126,7 @@
     }
 
     .footer-links-group a:hover {
-        color: #2196F3;
+        color: #ffffff;
     }
 
     .footer-bottom {
@@ -140,13 +149,13 @@
     }
 
     .secondary-links a {
-        color: #e0e0e0;
+        color: #cccccc;
         text-decoration: none;
         transition: color 0.2s;
     }
 
     .secondary-links a:hover {
-        color: #2196F3;
+        color: #ffffff;
     }
 
     .separator {

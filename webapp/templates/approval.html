@@ -1,0 +1,860 @@
+{% extends "base.html" %}
+
+{% block title %}Auftragsfreigabe{% endblock %}
+
+{% block extra_css %}
+<style>
+    .freigabe-intro {
+        background-color: var(--c-gray-50);
+        border-left: 4px solid var(--c-black);
+        padding: 1rem 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .freigabe-intro p { margin: 0; }
+
+    .auftrag {
+        background-color: var(--c-white);
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .auftrag-kopf {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        background-color: var(--c-gray-50);
+        border-bottom: 1px solid var(--c-border);
+    }
+
+    .auftrag-titel { margin: 0; font-size: 1.05rem; }
+
+    .auftrag-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+        gap: 0.75rem 1.5rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--c-border);
+    }
+
+    .meta-feld { font-size: 0.9rem; }
+
+    .meta-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--c-gray-500);
+    }
+
+    .auftrag-aktionen { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
+    .freigabe-button, .verwerfen-button {
+        padding: 0.6rem 1.1rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: background-color 0.15s, color 0.15s;
+    }
+
+    .freigabe-button {
+        background-color: var(--c-black);
+        color: var(--c-white);
+        border: 2px solid var(--c-black);
+    }
+    .freigabe-button:hover { background-color: var(--c-white); color: var(--c-black); }
+
+    .verwerfen-button {
+        background-color: var(--c-white);
+        color: var(--c-danger);
+        border: 2px solid var(--c-danger);
+    }
+    .verwerfen-button:hover { background-color: var(--c-danger); color: var(--c-white); }
+
+    .bauteil-tabelle { width: 100%; border-collapse: collapse; }
+
+    .bauteil-tabelle th {
+        text-align: left;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--c-gray-600);
+        padding: 0.6rem 0.75rem;
+        background-color: var(--c-gray-50);
+        border-bottom: 1px solid var(--c-border);
+        white-space: nowrap;
+    }
+
+    .bauteil-tabelle td {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--c-gray-100);
+        font-size: 0.88rem;
+        vertical-align: middle;
+    }
+
+    .bauteil-zeile.is-entfernt { opacity: 0.4; text-decoration: line-through; }
+    .bauteil-zeile.is-geaendert { background-color: var(--c-accent-bg); }
+
+    .bauteil-crop {
+        width: 54px;
+        height: 54px;
+        object-fit: cover;
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
+        background-color: var(--c-gray-50);
+    }
+
+    .bauteil-tabelle select {
+        padding: 0.35rem;
+        border: 1px solid var(--c-gray-300);
+        border-radius: var(--radius);
+        background-color: var(--c-white);
+        font-size: 0.85rem;
+        max-width: 170px;
+    }
+
+    .mass-felder { display: flex; gap: 0.35rem; align-items: center; }
+    .mass-felder select { max-width: 90px; }
+
+    .zeilen-aktionen { display: flex; gap: 0.4rem; white-space: nowrap; }
+
+    .mini-button {
+        padding: 0.35rem 0.6rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: 1px solid var(--c-gray-300);
+        background-color: var(--c-white);
+        color: var(--c-gray-700);
+        transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .mini-button.speichern:hover {
+        background-color: var(--c-black); color: var(--c-white); border-color: var(--c-black);
+    }
+    .mini-button.entfernen { color: var(--c-danger); border-color: var(--c-danger); }
+    .mini-button.entfernen:hover { background-color: var(--c-danger); color: var(--c-white); }
+
+    .aenderungs-hinweis {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #8a5a00;
+        background-color: #fdf3e2;
+        border: 1px solid #f0d9a8;
+        border-radius: var(--radius);
+        padding: 0.3rem 0.6rem;
+    }
+
+    .zeilen-status { font-size: 0.78rem; margin-left: 0.4rem; }
+    .zeilen-status.is-ok { color: var(--c-success); font-weight: 700; }
+    .zeilen-status.is-error { color: var(--c-danger); font-weight: 700; }
+
+    .menge { white-space: nowrap; font-weight: 700; }
+    .herkunft-klein {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 400;
+        color: var(--c-gray-500);
+    }
+
+    .farb-punkt {
+        display: inline-block;
+        width: 14px; height: 14px;
+        border-radius: 50%;
+        border: 1px solid var(--c-border);
+        vertical-align: middle;
+        margin-right: 0.3rem;
+    }
+
+    .leer-hinweis {
+        text-align: center;
+        padding: 3rem 1rem;
+        background-color: var(--c-white);
+        border: 1px dashed var(--c-border);
+        border-radius: var(--radius);
+        color: var(--c-gray-500);
+    }
+
+    .leer-hinweis i { font-size: 2rem; color: var(--c-gray-300); display: block; margin-bottom: 0.75rem; }
+
+    .tabellen-rahmen { overflow-x: auto; }
+
+    /* Badges (Zustand/Status) - wie in den Ergebnisseiten */
+    .condition-badge {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-left: 0.3rem;
+    }
+    .condition-damaged { background-color: #ffebee; color: #d32f2f; }
+    .condition-suspect { background-color: #fff3e0; color: #e65100; }
+
+    /* --- Archiv: alle Auftraege zum Aufklappen --- */
+    .archiv-bereich { margin-top: 3.5rem; }
+
+    .archiv-kopf {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--c-black);
+        margin-bottom: 1.25rem;
+    }
+
+    .archiv-kopf h2 { margin: 0 0 0.25rem 0; font-size: 1.15rem; }
+    .archiv-hinweis { margin: 0; font-size: 0.85rem; color: var(--c-gray-600); }
+
+    .archiv-suche {
+        padding: 0.55rem 0.8rem;
+        border: 1px solid var(--c-gray-300);
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+        min-width: min(280px, 100%);
+    }
+
+    .archiv-auftrag { margin-bottom: 0.75rem; }
+    .archiv-auftrag[open] { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
+    .archiv-auftrag[hidden] { display: none; }
+    .archiv-auftrag.is-geloescht { opacity: 0.45; }
+
+    .archiv-auftrag > summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1.25rem;
+        background-color: var(--c-gray-50);
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+    }
+
+    .archiv-auftrag > summary::-webkit-details-marker { display: none; }
+    .archiv-auftrag > summary:hover { background-color: var(--c-gray-100); }
+    .archiv-auftrag[open] > summary { border-bottom: 1px solid var(--c-border); }
+
+    .archiv-pfeil {
+        font-size: 0.75rem;
+        color: var(--c-gray-500);
+        transition: transform 0.15s;
+    }
+    .archiv-auftrag[open] .archiv-pfeil { transform: rotate(90deg); }
+
+    .archiv-titel { font-weight: 700; font-size: 0.95rem; }
+
+    .archiv-datum {
+        margin-left: auto;
+        font-size: 0.78rem;
+        color: var(--c-gray-500);
+        white-space: nowrap;
+    }
+
+    .archiv-notiz {
+        margin: 0;
+        padding: 0.75rem 1.25rem;
+        font-size: 0.85rem;
+        color: #8a5a00;
+        background-color: #fdf3e2;
+        border-bottom: 1px solid var(--c-border);
+    }
+
+    .archiv-fuss {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.6rem;
+        padding: 0.85rem 1.25rem;
+        background-color: var(--c-gray-50);
+        border-top: 1px solid var(--c-border);
+    }
+
+    .archiv-werkzeuge { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+    .auftrag.is-geloescht > summary .archiv-titel { text-decoration: line-through; }
+
+    @media (max-width: 768px) {
+        .archiv-datum { margin-left: 0; width: 100%; }
+        .archiv-suche { width: 100%; }
+    }
+
+    @media (max-width: 768px) {
+        .auftrag-kopf { flex-direction: column; align-items: flex-start; }
+        .auftrag-aktionen { width: 100%; }
+        .freigabe-button, .verwerfen-button { flex: 1 1 auto; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{# --- Bausteine, damit offene und archivierte Auftraege identisch aussehen --- #}
+{% macro auftrag_meta(auftrag) %}
+<div class="auftrag-meta">
+    <div class="meta-feld">
+        <span class="meta-label">System180-Auftrag</span>
+        {{ auftrag.system180_order or '–' }}
+    </div>
+    <div class="meta-feld">
+        <span class="meta-label">Kontakt</span>
+        {{ auftrag.contact_email or '–' }}
+    </div>
+    <div class="meta-feld">
+        <span class="meta-label">Telefon</span>
+        {{ auftrag.contact_phone or '–' }}
+    </div>
+    <div class="meta-feld">
+        <span class="meta-label">Standort</span>
+        {{ auftrag.formatted_address or auftrag.location or '–' }}
+    </div>
+    <div class="meta-feld">
+        <span class="meta-label">Auftragsart</span>
+        {{ auftrag.order_type or '–' }}
+    </div>
+    {% if auftrag.additional_info %}
+    <div class="meta-feld">
+        <span class="meta-label">Hinweise</span>
+        {{ auftrag.additional_info }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro bauteil_zeile(teil) %}
+<tr class="bauteil-zeile" data-comp-id="{{ teil.comp_id }}">
+    <td>
+        {% if teil.crop_path %}
+        <img src="/static/{{ teil.crop_path }}" alt="{{ teil.class }}" class="bauteil-crop" loading="lazy">
+        {% else %}
+        <span class="bauteil-crop"></span>
+        {% endif %}
+    </td>
+    <td class="menge">
+        {{ teil.anzahl or 1 }}x
+        {% if teil.anzahl_beschaedigt %}
+        <span class="condition-badge condition-damaged">{{ teil.anzahl_beschaedigt }} beschädigt</span>
+        {% endif %}
+        {% if teil.herkunft %}
+        <span class="herkunft-klein">{{ teil.herkunft }}</span>
+        {% endif %}
+    </td>
+    <td>
+        <select name="bauteil" onchange="onBauteilWechsel(this)">
+            {% for name in bauteil_optionen %}
+            <option value="{{ name }}" {% if teil.basisklasse == name %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <div class="mass-felder">
+            <select name="breite" data-current="{{ teil.breite if teil.breite else '' }}" hidden></select>
+            <select name="laenge" data-current="{{ teil.laenge if teil.laenge else '' }}" hidden></select>
+        </div>
+    </td>
+    <td>
+        <span class="farb-punkt" style="background-color: {{ (teil.farbe.hex_code if teil.farbe else none) or '#ffffff' }}"></span>
+        <select name="farbe" onchange="onFarbeWechsel(this)">
+            <option value="">– unverändert –</option>
+            {% for name, daten in farb_optionen.items() %}
+            <option value="{{ name }}" data-hex="{{ daten.hex_code }}"
+                    {% if teil.farbe and teil.farbe.erkannte_farbe == name %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <select name="zustand" onchange="onZustandWechsel(this)">
+            {% for z in zustand_optionen %}
+            <option value="{{ z }}" {% if teil.zustand == z %}selected{% endif %}>{{ z }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td class="center-align">
+        <input type="checkbox" name="reusable" {% if teil.reusable %}checked{% endif %}>
+    </td>
+    <td>
+        <div class="zeilen-aktionen">
+            <button type="button" class="mini-button speichern" onclick="bauteilSpeichern(this)">Speichern</button>
+            <button type="button" class="mini-button entfernen" onclick="bauteilEntfernen(this)">Entfernen</button>
+        </div>
+        <span class="zeilen-status"></span>
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro bauteil_tabelle(teile) %}
+<div class="tabellen-rahmen">
+    <table class="bauteil-tabelle">
+        <thead>
+            <tr>
+                <th>Ausschnitt</th>
+                <th>Anzahl</th>
+                <th>Bauteil</th>
+                <th>Maße (mm)</th>
+                <th>Farbe</th>
+                <th>Zustand</th>
+                <th>Wiederverwendbar</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teil in teile %}
+            {{ bauteil_zeile(teil) }}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endmacro %}
+
+<div class="detection-app">
+    <div class="header-section">
+        <div class="header-image-container">
+            <img src="https://www.system180.com/wp-content/uploads/2021/06/System180_Made-In_Berlin_-scaled.jpg"
+                 alt="System180 Made in Berlin" class="header-image">
+            <div class="header-overlay">
+                <h1 class="header-title">Auftragsfreigabe</h1>
+                <p class="header-subtitle">Erfasste Bauteile prüfen und ins digitale Lager übernehmen</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <div class="freigabe-intro">
+            <p>
+                Diese Aufträge wurden erfasst und warten auf Prüfung. Bauteile lassen sich hier
+                korrigieren oder entfernen. Erst nach der Freigabe erscheinen sie im digitalen Lager.
+            </p>
+        </div>
+
+        <div id="offene-auftraege">
+        {% if auftraege %}
+            {% for auftrag in auftraege %}
+            <div class="auftrag" data-order-id="{{ auftrag.order_id }}">
+                <div class="auftrag-kopf">
+                    <h3 class="auftrag-titel">
+                        Vorgang {{ auftrag.order_id }}
+                        <span class="condition-badge condition-damaged">{{ auftrag.komponenten | length }} Bauteile offen</span>
+                    </h3>
+                    <div class="auftrag-aktionen">
+                        <button type="button" class="verwerfen-button" onclick="auftragVerwerfen(this)">
+                            <i class="fas fa-trash"></i> Verwerfen
+                        </button>
+                        <button type="button" class="freigabe-button" onclick="auftragFreigeben(this)">
+                            <i class="fas fa-check"></i> Ins digitale Lager übernehmen
+                        </button>
+                        <span class="zeilen-status auftrag-status"></span>
+                        <span class="aenderungs-hinweis" hidden>
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span class="aenderungs-anzahl">0</span> nicht gespeichert
+                            <button type="button" class="mini-button speichern" onclick="alleSpeichernKnopf(this)">Alle speichern</button>
+                        </span>
+                    </div>
+                </div>
+
+                {{ auftrag_meta(auftrag) }}
+                {{ bauteil_tabelle(auftrag.komponenten) }}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="leer-hinweis">
+                <i class="fas fa-clipboard-check"></i>
+                <p>Keine Aufträge offen – alle erfassten Bauteile sind freigegeben.</p>
+            </div>
+        {% endif %}
+        </div>
+
+        {# --- Archiv: jeder jemals erfasste Auftrag, nachträglich zu korrigieren --- #}
+        <section class="archiv-bereich">
+            <div class="archiv-kopf">
+                <div>
+                    <h2><i class="fas fa-folder-open"></i> Alle Aufträge</h2>
+                    <p class="archiv-hinweis">
+                        Bereits freigegebene Aufträge zum Aufklappen – Bauteile nachträglich korrigieren,
+                        einzeln entfernen oder den ganzen Auftrag löschen.
+                    </p>
+                </div>
+                <div class="archiv-werkzeuge">
+                    <input type="search" class="archiv-suche" id="archivSuche" autocomplete="off"
+                           placeholder="Vorgang, Auftrag, Kontakt oder Ort suchen …"
+                           oninput="archivFiltern(this.value)">
+                    <button type="button" class="mini-button" onclick="archivAlleAufklappen(this)">Alle aufklappen</button>
+                </div>
+            </div>
+
+            {% if alle_auftraege %}
+            <div id="archivListe">
+                {% for auftrag in alle_auftraege %}
+                {% set offen = auftrag.offene_bauteile or 0 %}
+                {% set freigegebene = auftrag.freigegebene_bauteile %}
+                <details class="auftrag archiv-auftrag"
+                         data-order-id="{{ auftrag.order_id }}"
+                         data-freigegeben="{{ 'true' if freigegebene else 'false' }}"
+                         data-suchtext="{{ (auftrag.order_id ~ ' ' ~ (auftrag.system180_order or '') ~ ' ' ~ (auftrag.contact_email or '') ~ ' ' ~ (auftrag.contact_phone or '') ~ ' ' ~ (auftrag.formatted_address or auftrag.location or '') ~ ' ' ~ (auftrag.order_type or '')) | lower }}">
+                    <summary>
+                        <i class="fas fa-chevron-right archiv-pfeil"></i>
+                        <span class="archiv-titel">Vorgang {{ auftrag.order_id }}</span>
+                        {% if offen %}
+                        <span class="condition-badge condition-suspect">{{ offen }} offen</span>
+                        {% endif %}
+                        {% if not offen and not freigegebene %}
+                        <span class="condition-badge condition-damaged">ohne Bauteile</span>
+                        {% endif %}
+                        <span class="archiv-datum">
+                            {% if auftrag.freigegeben_am_text %}freigegeben {{ auftrag.freigegeben_am_text }}{% endif %}
+                        </span>
+                    </summary>
+
+                    {{ auftrag_meta(auftrag) }}
+
+                    {% if offen %}
+                    <p class="archiv-notiz">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ offen }} Bauteil(e) dieses Auftrags warten noch auf Freigabe –
+                        <a href="#offene-auftraege">oben prüfen und freigeben</a>.
+                    </p>
+                    {% endif %}
+
+                    {% if freigegebene %}
+                    {{ bauteil_tabelle(freigegebene) }}
+                    {% endif %}
+
+                    <div class="archiv-fuss">
+                        <span class="aenderungs-hinweis" hidden>
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span class="aenderungs-anzahl">0</span> nicht gespeichert
+                            <button type="button" class="mini-button speichern" onclick="alleSpeichernKnopf(this)">Alle speichern</button>
+                        </span>
+                        <span class="zeilen-status auftrag-status"></span>
+                        <button type="button" class="verwerfen-button" onclick="auftragVerwerfen(this)">
+                            <i class="fas fa-trash"></i> Auftrag löschen
+                        </button>
+                    </div>
+                </details>
+                {% endfor %}
+            </div>
+            <div class="leer-hinweis" id="archiv-kein-treffer" hidden>
+                <i class="fas fa-magnifying-glass"></i>
+                <p>Kein Auftrag passt zur Suche.</p>
+            </div>
+            {% else %}
+            <div class="leer-hinweis">
+                <i class="fas fa-box-open"></i>
+                <p>Noch keine Aufträge erfasst.</p>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LAENGEN_OPTIONEN = {{ laengen_optionen | tojson }};
+const FLAECHEN_OPTIONEN = {{ flaechen_optionen | tojson }};
+const BESCHAEDIGTE_ZUSTAENDE = {{ beschaedigte_zustaende | tojson }};
+
+function fuelleSelect(select, optionen, wunsch) {
+    select.innerHTML = '';
+    const leer = document.createElement('option');
+    leer.value = '';
+    leer.textContent = '–';
+    select.appendChild(leer);
+    optionen.forEach(wert => {
+        const opt = document.createElement('option');
+        opt.value = wert;
+        opt.textContent = wert;
+        if (String(wert) === String(wunsch)) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+// Maßfelder richten sich nach dem Bauteil: Streben haben eine Länge,
+// Flächen zwei Systemmaße aus unterschiedlichen Rastern.
+function fuelleMasse(zeile, breiteWunsch, laengeWunsch) {
+    const bauteil = zeile.querySelector('select[name="bauteil"]').value;
+    const breiteSelect = zeile.querySelector('select[name="breite"]');
+    const laengeSelect = zeile.querySelector('select[name="laenge"]');
+    const flaeche = FLAECHEN_OPTIONEN[bauteil];
+
+    if (flaeche) {
+        breiteSelect.hidden = false;
+        laengeSelect.hidden = false;
+        breiteSelect.title = flaeche.breite_label;
+        laengeSelect.title = flaeche.laenge_label;
+        fuelleSelect(breiteSelect, flaeche.breite, breiteWunsch);
+        fuelleSelect(laengeSelect, flaeche.laenge, laengeWunsch);
+        return;
+    }
+
+    breiteSelect.hidden = true;
+    breiteSelect.innerHTML = '';
+    const optionen = LAENGEN_OPTIONEN[bauteil] || [];
+    if (!optionen.length) {
+        laengeSelect.hidden = true;
+        laengeSelect.innerHTML = '';
+        return;
+    }
+    laengeSelect.hidden = false;
+    laengeSelect.title = 'Länge';
+    fuelleSelect(laengeSelect, optionen, laengeWunsch);
+}
+
+// Farbfeld neben der Auswahl mitziehen.
+function onFarbeWechsel(select) {
+    const zeile = select.closest('.bauteil-zeile');
+    const gewaehlt = select.options[select.selectedIndex];
+    const punkt = zeile.querySelector('.farb-punkt');
+    if (punkt) punkt.style.backgroundColor = gewaehlt.dataset.hex || '#ffffff';
+    zeile.classList.add('is-geaendert');
+}
+
+function onBauteilWechsel(select) {
+    const zeile = select.closest('.bauteil-zeile');
+    fuelleMasse(zeile,
+        zeile.querySelector('select[name="breite"]').value,
+        zeile.querySelector('select[name="laenge"]').value);
+    zeile.classList.add('is-geaendert');
+}
+
+// Wiederverwendbarkeit ist nur bei einem Schaden eine Entscheidung.
+function onZustandWechsel(select) {
+    const zeile = select.closest('.bauteil-zeile');
+    const checkbox = zeile.querySelector('input[name="reusable"]');
+    const beschaedigt = BESCHAEDIGTE_ZUSTAENDE.includes(select.value);
+    checkbox.disabled = !beschaedigt;
+    if (!beschaedigt) checkbox.checked = true;
+    zeile.classList.add('is-geaendert');
+}
+
+// Hinweisleiste "N nicht gespeichert" je Auftrag pflegen.
+function aktualisiereHinweis(auftrag) {
+    const hinweis = auftrag.querySelector('.aenderungs-hinweis');
+    if (!hinweis) return;
+    const anzahl = offeneAenderungen(auftrag).length;
+    hinweis.querySelector('.aenderungs-anzahl').textContent = anzahl;
+    hinweis.hidden = anzahl === 0;
+}
+
+async function alleSpeichernKnopf(knopf) {
+    const auftrag = knopf.closest('.auftrag');
+    knopf.disabled = true;
+    await alleSpeichern(auftrag);
+    knopf.disabled = false;
+    aktualisiereHinweis(auftrag);
+}
+
+function status(element, text, art) {
+    element.textContent = text;
+    element.className = 'zeilen-status' + (art ? ' is-' + art : '');
+}
+
+function bauteilSpeichern(knopf) {
+    return zeileSpeichern(knopf.closest('.bauteil-zeile'));
+}
+
+function zeileSpeichern(zeile) {
+    const anzeige = zeile.querySelector('.zeilen-status');
+    const zustand = zeile.querySelector('select[name="zustand"]').value;
+    const beschaedigt = BESCHAEDIGTE_ZUSTAENDE.includes(zustand);
+
+    const daten = new FormData();
+    daten.append('comp_id', zeile.dataset.compId);
+    daten.append('bauteil', zeile.querySelector('select[name="bauteil"]').value);
+    daten.append('zustand', zustand);
+    daten.append('laenge', zeile.querySelector('select[name="laenge"]').value || '');
+    daten.append('breite', zeile.querySelector('select[name="breite"]').value || '');
+    daten.append('farbe', zeile.querySelector('select[name="farbe"]').value || '');
+    daten.append('reusable', (!beschaedigt || zeile.querySelector('input[name="reusable"]').checked).toString());
+
+    status(anzeige, 'Speichern …');
+    return fetch('/freigabe/bauteil/aktualisieren', { method: 'POST', body: daten })
+        .then(r => r.json())
+        .then(e => {
+            if (!e.success) { status(anzeige, e.message || 'Abgelehnt', 'error'); return false; }
+            zeile.classList.remove('is-geaendert');
+            aktualisiereHinweis(zeile.closest('.auftrag'));
+            status(anzeige, 'Gespeichert', 'ok');
+            return true;
+        })
+        .catch(() => { status(anzeige, 'Serverfehler', 'error'); return false; });
+}
+
+// Alle offenen Änderungen eines Auftrags speichern.
+function offeneAenderungen(auftrag) {
+    return Array.from(auftrag.querySelectorAll('.bauteil-zeile.is-geaendert:not(.is-entfernt)'));
+}
+
+async function alleSpeichern(auftrag) {
+    const offen = offeneAenderungen(auftrag);
+    let erfolgreich = 0;
+    for (const zeile of offen) {
+        if (await zeileSpeichern(zeile)) erfolgreich++;
+    }
+    return { gesamt: offen.length, erfolgreich };
+}
+
+function bauteilEntfernen(knopf) {
+    const zeile = knopf.closest('.bauteil-zeile');
+    if (!confirm('Bauteil endgültig aus dem Auftrag entfernen?')) return;
+    const anzeige = zeile.querySelector('.zeilen-status');
+
+    const daten = new FormData();
+    daten.append('comp_id', zeile.dataset.compId);
+
+    status(anzeige, 'Entfernen …');
+    fetch('/freigabe/bauteil/entfernen', { method: 'POST', body: daten })
+        .then(r => r.json())
+        .then(e => {
+            if (!e.success) { status(anzeige, e.message || 'Abgelehnt', 'error'); return; }
+            zeile.classList.remove('is-geaendert');
+            zeile.classList.add('is-entfernt');
+            aktualisiereHinweis(zeile.closest('.auftrag'));
+            zeile.querySelectorAll('select, input, button').forEach(el => el.disabled = true);
+            status(anzeige, 'Entfernt', 'ok');
+        })
+        .catch(() => status(anzeige, 'Serverfehler', 'error'));
+}
+
+async function auftragFreigeben(knopf) {
+    const auftrag = knopf.closest('.auftrag');
+    const anzeige = auftrag.querySelector('.auftrag-status');
+
+    // Ungespeicherte Änderungen nicht verwerfen, sondern vor der Freigabe
+    // mitspeichern - sonst ginge die Korrektur beim Weiterklicken verloren.
+    const offen = offeneAenderungen(auftrag).length;
+    if (offen) {
+        if (!confirm(offen + ' Bauteil(e) wurden geändert, aber noch nicht gespeichert.\n\n'
+                     + 'OK: Änderungen jetzt speichern und Auftrag freigeben.\n'
+                     + 'Abbrechen: nichts tun.')) return;
+        status(anzeige, 'Änderungen speichern …');
+        const ergebnis = await alleSpeichern(auftrag);
+        if (ergebnis.erfolgreich < ergebnis.gesamt) {
+            status(anzeige, `${ergebnis.gesamt - ergebnis.erfolgreich} Änderung(en) `
+                   + 'konnten nicht gespeichert werden – Freigabe abgebrochen.', 'error');
+            return;
+        }
+    }
+
+    const daten = new FormData();
+    daten.append('order_id', auftrag.dataset.orderId);
+
+    status(anzeige, 'Freigeben …');
+    fetch('/freigabe/auftrag/freigeben', { method: 'POST', body: daten })
+        .then(r => r.json())
+        .then(e => {
+            if (!e.success) { status(anzeige, e.message || 'Abgelehnt', 'error'); return; }
+            status(anzeige, 'Freigegeben – jetzt im digitalen Lager');
+            anzeige.className = 'zeilen-status auftrag-status is-ok';
+            auftrag.querySelectorAll('select, input, button').forEach(el => el.disabled = true);
+        })
+        .catch(() => status(anzeige, 'Serverfehler', 'error'));
+}
+
+function auftragVerwerfen(knopf) {
+    const auftrag = knopf.closest('.auftrag');
+    const imLager = auftrag.dataset.freigegeben === 'true';
+    const frage = imLager
+        ? 'Auftrag ' + auftrag.dataset.orderId + ' mit allen Bauteilen löschen?\n\n'
+          + 'Die bereits freigegebenen Bauteile verschwinden damit auch aus dem digitalen Lager. '
+          + 'Das lässt sich nicht rückgängig machen.'
+        : 'Diesen Auftrag mit allen Bauteilen verwerfen? Das lässt sich nicht rückgängig machen.';
+    if (!confirm(frage)) return;
+    const anzeige = auftrag.querySelector('.auftrag-status');
+
+    const daten = new FormData();
+    daten.append('order_id', auftrag.dataset.orderId);
+
+    status(anzeige, imLager ? 'Löschen …' : 'Verwerfen …');
+    fetch('/freigabe/auftrag/verwerfen', { method: 'POST', body: daten })
+        .then(r => r.json())
+        .then(e => {
+            if (!e.success) { status(anzeige, e.message || 'Abgelehnt', 'error'); return; }
+            auftrag.classList.add('is-geloescht');
+            auftrag.style.opacity = '0.4';
+            auftrag.querySelectorAll('select, input, button').forEach(el => el.disabled = true);
+            status(anzeige, imLager ? 'Gelöscht' : 'Verworfen', 'ok');
+            // Dieselbe Order kann oben in der Pruefung stehen - dort ist sie
+            // nach dem Loeschen ebenfalls hinfaellig.
+            document.querySelectorAll('.auftrag[data-order-id="' + CSS.escape(auftrag.dataset.orderId) + '"]')
+                .forEach(kopie => {
+                    if (kopie === auftrag) return;
+                    kopie.classList.add('is-geloescht');
+                    kopie.style.opacity = '0.4';
+                    kopie.querySelectorAll('select, input, button').forEach(el => el.disabled = true);
+                    const kopieStatus = kopie.querySelector('.auftrag-status');
+                    if (kopieStatus) status(kopieStatus, 'Gelöscht', 'ok');
+                });
+        })
+        .catch(() => status(anzeige, 'Serverfehler', 'error'));
+}
+
+// --- Archiv: Suche und Aufklappen ---
+function archivFiltern(text) {
+    const suche = text.trim().toLowerCase();
+    let treffer = 0;
+    document.querySelectorAll('.archiv-auftrag').forEach(auftrag => {
+        const passt = !suche || (auftrag.dataset.suchtext || '').includes(suche);
+        auftrag.hidden = !passt;
+        if (passt) treffer++;
+    });
+    const hinweis = document.getElementById('archiv-kein-treffer');
+    if (hinweis) hinweis.hidden = treffer > 0;
+}
+
+function archivAlleAufklappen(knopf) {
+    const sichtbare = Array.from(document.querySelectorAll('.archiv-auftrag:not([hidden])'));
+    const aufklappen = sichtbare.some(auftrag => !auftrag.open);
+    sichtbare.forEach(auftrag => { auftrag.open = aufklappen; });
+    knopf.textContent = aufklappen ? 'Alle zuklappen' : 'Alle aufklappen';
+}
+
+// Maßfelder und Checkbox-Zustand herstellen.
+function zeileInitialisieren(zeile) {
+    if (zeile.dataset.initialisiert === 'true') return;
+    zeile.dataset.initialisiert = 'true';
+    const breite = zeile.querySelector('select[name="breite"]');
+    const laenge = zeile.querySelector('select[name="laenge"]');
+    fuelleMasse(zeile, breite.dataset.current, laenge.dataset.current);
+    const zustand = zeile.querySelector('select[name="zustand"]');
+    const checkbox = zeile.querySelector('input[name="reusable"]');
+    const beschaedigt = BESCHAEDIGTE_ZUSTAENDE.includes(zustand.value);
+    checkbox.disabled = !beschaedigt;
+    if (!beschaedigt) checkbox.checked = true;
+    zeile.classList.remove('is-geaendert');
+    zeile.querySelectorAll('select, input').forEach(el => {
+        el.addEventListener('change', () => {
+            zeile.classList.add('is-geaendert');
+            aktualisiereHinweis(zeile.closest('.auftrag'));
+        });
+    });
+}
+
+// Offene Aufträge stehen sofort bereit. Das Archiv kann viele Aufträge
+// enthalten - dessen Zeilen werden erst beim Aufklappen aufgebaut.
+document.querySelectorAll('.auftrag:not(.archiv-auftrag) .bauteil-zeile').forEach(zeileInitialisieren);
+
+document.querySelectorAll('.archiv-auftrag').forEach(auftrag => {
+    auftrag.addEventListener('toggle', () => {
+        if (auftrag.open) auftrag.querySelectorAll('.bauteil-zeile').forEach(zeileInitialisieren);
+    });
+    if (auftrag.open) auftrag.querySelectorAll('.bauteil-zeile').forEach(zeileInitialisieren);
+});
+</script>
+{% endblock %}

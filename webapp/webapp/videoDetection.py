@@ -17,7 +17,7 @@ from ultralytics import YOLO
 
 router = APIRouter(prefix="/video")
 
-templates = Jinja2Templates(directory="templates")
+from .templating import templates
 
 # Directory paths
 UPLOAD_DIR = Path("uploads")

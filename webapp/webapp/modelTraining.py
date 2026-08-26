@@ -17,7 +17,7 @@ from .auth import is_admin
 from .modelRegistry import adopt_trained_model, get_active_model_path
 
 router = APIRouter(prefix="/training")
-templates = Jinja2Templates(directory="templates")
+from .templating import templates
 
 load_dotenv()
 PROJECT_ID = os.getenv("PROJECT_ID", "1")

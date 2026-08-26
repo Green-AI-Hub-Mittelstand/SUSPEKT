@@ -15,23 +15,20 @@
             <ul class="nav-links">
                 <li class="nav-item">
                     <a href="/" class="nav-link active">
-                        <i class="fas fa-home"></i>
                         <span>Home</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/video" class="nav-link">
-                        <i class="fas fa-video"></i>
-                        <span>Video</span>
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a href="/inventory" class="nav-link">
-                        <i class="fas fa-warehouse"></i>
                         <span>Digitales Lager</span>
                     </a>
                 </li>
                 {% if request.session.get('user') == 'admin' %}
+                <li class="nav-item">
+                    <a href="/freigabe" class="nav-link">
+                        <span>Auftragsfreigabe</span>
+                    </a>
+                </li>
                 <li class="nav-item">
                     <a href="/training" class="nav-link">
                         <i class="fas fa-graduation-cap"></i>
@@ -41,7 +38,6 @@
                 {% endif %}
                 <li class="nav-item">
                     <a href="/resource" class="nav-link">
-                        <i class="fas fa-recycle"></i>
                         <span>Ressourceneffizienz</span>
                     </a>
                 </li>
@@ -50,13 +46,13 @@
             <div class="nav-user-actions">
                 {% if request.session.get('user') == 'admin' %}
                     <a href="/decordetection/manage_colors" class="action-button">
-                        <i class="fas fa-paintbrush"> </i>  Verwalten
+                        <i class="fas fa-paintbrush"></i> Verwalten
                     </a>
 
                     <div class="user-profile">
-                        <a href="#" class="logout-button">
-                        <i class="fa-solid fa-user-tie"></i>
-                        </a>
+                        <span class="user-badge">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </span>
 
                         <a href="/logout" class="logout-button">
                             <i class="fas fa-sign-out-alt"></i> Logout
@@ -64,7 +60,6 @@
                     </div>
                 {% else %}
                     <a href="/login" class="login-link">Login</a>
-
                 {% endif %}
             </div>
         </div>
@@ -74,12 +69,12 @@
 <style>
 /* Hauptnavigation */
 .main-navigation {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
     position: sticky;
     top: 0;
     z-index: 1000;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 .nav-container {
@@ -89,7 +84,7 @@
     align-items: center;
     padding: 0 1.5rem;
     position: relative;
-    height: 80px;
+    height: 76px;
 }
 
 /* Logo-Bereich */
@@ -106,7 +101,7 @@
 }
 
 .logo-image {
-    height: 70px;
+    height: 60px;
     width: auto;
 }
 
@@ -115,8 +110,8 @@
     display: none;
     flex-direction: column;
     justify-content: space-between;
-    width: 30px;
-    height: 21px;
+    width: 28px;
+    height: 20px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -125,9 +120,8 @@
 
 .toggle-bar {
     width: 100%;
-    height: 3px;
-    background-color: #333;
-    border-radius: 3px;
+    height: 2px;
+    background-color: #000;
     transition: all 0.3s ease;
 }
 
@@ -158,8 +152,9 @@
     padding: 1.2rem 0.7rem;
     color: #444;
     text-decoration: none;
-    transition: all 0.2s ease;
-    font-weight: 500;
+    transition: color 0.15s ease;
+    font-weight: 600;
+    font-size: 0.92rem;
     position: relative;
     white-space: nowrap;
 }
@@ -171,11 +166,11 @@
 }
 
 .nav-link:hover {
-    color: #2196F3;
+    color: #000;
 }
 
 .nav-link.active {
-    color: #2196F3;
+    color: #000;
 }
 
 .nav-link.active:after {
@@ -184,8 +179,8 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 3px;
-    background: #2196F3;
+    height: 2px;
+    background: #000;
 }
 
 /* Benutzeraktionen */
@@ -198,94 +193,61 @@
 .action-button {
     display: flex;
     align-items: center;
-    padding: 0.6rem 1rem;
+    gap: 0.4rem;
+    padding: 0.6rem 1.1rem;
     text-decoration: none;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.scan-button {
-    background-color: #e3f2fd;
-    color: #1976D2;
+    border-radius: 2px;
+    font-weight: 600;
+    background-color: #000;
+    color: #fff;
     margin-right: 1rem;
+    transition: background-color 0.15s;
 }
 
-.scan-button:hover {
-    background-color: #bbdefb;
-}
-
-.scan-button i {
-    margin-right: 0.4rem;
+.action-button:hover {
+    background-color: #333;
+    color: #fff;
 }
 
 .user-profile {
     display: flex;
     align-items: center;
+    gap: 1rem;
 }
 
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-right: 0.7rem;
-}
-
-.user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.user-badge {
+    color: #444;
+    display: flex;
+    align-items: center;
 }
 
 .logout-button {
-    color: #666;
+    color: #444;
     text-decoration: none;
     display: flex;
     align-items: center;
-    transition: color 0.2s;
+    gap: 0.4rem;
+    transition: color 0.15s;
+    font-weight: 600;
 }
 
 .logout-button:hover {
-    color: #f44336;
-}
-
-.logout-button i {
-    margin-right: 0.4rem;
+    color: #000;
 }
 
 .login-link {
-    color: #444;
+    color: #000;
     text-decoration: none;
-    margin-right: 1rem;
-    transition: color 0.2s;
-    border: 1px solid #e0e0e0;
+    transition: background-color 0.15s, color 0.15s;
+    border: 1px solid #000;
     padding: 0.6rem 1.2rem;
-    border-radius: 4px;
-    font-weight: 500;
+    border-radius: 2px;
+    font-weight: 600;
 }
 
 .login-link:hover {
-    color: #2196F3;
-    border-color: #2196F3;
-    background-color: #f5f5f5;
-}
-
-.register-button {
-    background-color: #2196F3;
-    color: white;
-    padding: 0.6rem 1.2rem;
-    border-radius: 4px;
-    text-decoration: none;
-    transition: all 0.2s;
-    font-weight: 500;
-    box-shadow: 0 2px 5px rgba(33, 150, 243, 0.3);
-}
-
-.register-button:hover {
-    background-color: #1976D2;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+    color: #fff;
+    background-color: #000;
 }
 
 /* Responsive Design */
@@ -338,16 +300,12 @@
         margin: 0.5rem 0;
     }
 
-    .scan-button {
-        margin-right: 0;
-    }
-
     .user-profile {
         width: 100%;
         justify-content: space-between;
     }
 
-    .login-link, .register-button {
+    .login-link {
         margin: 0.5rem 0;
         width: 100%;
         text-align: center;

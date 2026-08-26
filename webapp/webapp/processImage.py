@@ -17,7 +17,13 @@ from . import config
 from .config import color_detection_classes, beschichtung_detection_classes
 from .damageDetection import inspect_crop
 from .decorDetection import UnidekorDetector
-from .measurement import calculate_pixel_to_mm_ratio, calculate_straight_lengths, reference_values
+from .measurement import (
+    calculate_diagonale_lengths,
+    calculate_straight_lengths,
+    estimate_scale_context,
+    reconcile_measurements,
+    reference_values,
+)
 from .trainingDataCollector import TrainingDataCollector
 from .visualize import get_color_for_class, draw_bounding_boxes
 from .combineYOLOModels import ensemble_predictions
@@ -44,6 +50,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
 
     detected_images = []  # Liste der Originalbilder
     image_results = {}  # Dictionary für DataFrames pro Bild
+    pending_annotations = []  # Zeichnen erst nach dem Abgleich über alle Ansichten
     views = views or {}
     print(f"Verarbeite Bilder mit views: {views}")  # Debug-Log
     print(f"Ist symmetrisch: {capture_type}")  # Debug-Log
@@ -60,7 +67,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
 
     for file in files:
         try:
-            # 📌 **Bild laden**
+            # Bild laden
             image_bytes = file.file.read()
             image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
@@ -70,8 +77,16 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
             image.save(original_path)  # Speichert das Originalbild
             detected_images.append(original_filename)
 
-            # Ansicht aus dem Views-Dictionary abrufen
-            view = views.get(original_filename, "any")  # Default auf "any" statt "unbekannt"
+            # Ansicht aus dem Views-Dictionary abrufen.
+            #
+            # Das Formular schickt die Ansichten unter dem Originalnamen ("Regal
+            # Front.jpg"), hier wurden Leerzeichen aber bereits durch Unterstriche
+            # ersetzt. Ohne den Abgleich beider Schreibweisen greift der Rückfall
+            # auf "any" und die Ansicht geht verloren.
+            view = (views.get(original_filename)
+                    or views.get(file.filename)
+                    or views.get(file.filename.replace(' ', '_'))
+                    or "any")
             print(f"Verwende View für {original_filename}: {view}")  # Debug-Log zur Verfolgung des View-Werts
 
 
@@ -82,16 +97,16 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
             image_np = np.array(image)
             #image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
 
-            # 📌 **YOLO Vorhersage mit zwei Modellen**
+            # YOLO Vorhersage mit zwei Modellen
             results1 = config.model1.predict(image, save=False, conf=class_confidence)
             results2 = config.model2.predict(image, save=False, conf=class_confidence)
 
-            # 📌 **Ensemble-Methode kombiniert beide YOLO Ergebnisse**
+            # Ensemble-Methode kombiniert beide YOLO Ergebnisse
             final_boxes, final_scores, final_classes = ensemble_predictions(results1, results2)
 
             detected_data = []  # Neu initialisieren für jedes Bild!
 
-            # 📌 **Bounding Box Daten erfassen**
+            # Bounding Box Daten erfassen
             for i in range(len(final_boxes)):
                 x1, y1, x2, y2 = map(int, final_boxes[i])
                 conf = float(final_scores[i])
@@ -103,7 +118,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                 crop_image = Image.fromarray(crop)
 
                 if crop.size == 0:
-                    print(f"⚠️ Fehler: Crop für {class_name} ist leer! BBox: ({x1}, {y1}, {x2}, {y2})")
+                    print(f"Fehler: Crop für {class_name} ist leer! BBox: ({x1}, {y1}, {x2}, {y2})")
 
                 # Generate unique filename for crop
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -114,16 +129,19 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                 try:
                     crop_image.save(crop_path)
                 except Exception as e:
-                    print(f"❌ Fehler beim Speichern des Crops: {e}")
+                    print(f"Fehler beim Speichern des Crops: {e}")
 
                 # Standardwerte setzen
+                # Standard ist "unbeschädigt" - ein Schaden wird von der
+                # Schadensprüfung unten gesetzt. Ein unbekannter Zustand würde
+                # sonst später als "nicht wiederverwendbar" gewertet.
                 properties = CLASS_PROPERTIES.get(class_name, {
                     "gewicht": "Nicht verfügbar",
                     "typ": "Unbekannt",
-                    "zustand": "Unbekannt",
+                    "zustand": "unbeschädigt",
                 })
 
-                # 📌 Schadensprüfung auf dem Crop: Schadensmodell (falls
+                # Schadensprüfung auf dem Crop: Schadensmodell (falls
                 # hochgeladen) + Verdachts-Ampel (falls Gutteil-Banks trainiert)
                 zustand = properties.get("zustand", "Unbekannt")
                 reusable = True
@@ -142,7 +160,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                             color_result = color_detector.analyze_image(absolute_crop_path)
                             farbe = color_result.get('erkannte_farbe', "Nicht verfügbar")
                     except Exception as e:
-                        print(f"❌ Fehler bei Farberkennung für {class_name}: {e}")
+                        print(f"Fehler bei Farberkennung für {class_name}: {e}")
 
                 if class_name in beschichtung_detection_classes:
                     try:
@@ -151,7 +169,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                             beschichtung_result = beschichtung_detector.analyze_image(absolute_crop_path)
                             farbe = beschichtung_result.get('erkannte_farbe', "Nicht verfügbar")
                     except Exception as e:
-                        print(f"❌ Fehler bei Beschichtungserkennung für {class_name}: {e}")
+                        print(f"Fehler bei Beschichtungserkennung für {class_name}: {e}")
 
                 detected_data.append({
                     "bbox_id": i,
@@ -174,12 +192,16 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
 
 
 
-            # 📌 **Erstelle DataFrame für das aktuelle Bild**
+            # Erstelle DataFrame für das aktuelle Bild
             df_boxes = pd.DataFrame(detected_data)
 
-            # 📌 **Maßstab berechnen & zuweisen**
-            scaling_factors = calculate_pixel_to_mm_ratio(df_boxes)
-            df_boxes = calculate_straight_lengths(df_boxes, pixel_to_mm_ratio=scaling_factors.get("Gerade", 1))
+            # Maßstab berechnen & zuweisen
+            # Erst die geraden Streben vermessen: ihre auf das Systemraster
+            # gerundeten Längen sind die Feldkanten, aus denen die Diagonalen
+            # anschließend geometrisch abgeleitet werden.
+            scale_context = estimate_scale_context(df_boxes)
+            df_boxes = calculate_straight_lengths(df_boxes, scale=scale_context)
+            df_boxes = calculate_diagonale_lengths(df_boxes, scale=scale_context)
 
             # Falls die Spalte nicht existiert oder leer ist, initialisiere sie mit None
             if "breite" not in df_boxes.columns:
@@ -187,7 +209,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
             if "laenge" not in df_boxes.columns:
                 df_boxes["laenge"] = None
 
-            # 📌 **Maße für Referenzobjekte zuweisen**
+            # Maße für Referenzobjekte zuweisen
             for index, row in df_boxes.iterrows():
                 class_name = row["class"]
                 if class_name in reference_values:
@@ -199,14 +221,14 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                     df_boxes.at[index, "laenge"] = height_mm if pd.isna(row["laenge"]) else row["laenge"]
 
 
-            # 📌 **Maße als formatierten String hinzufügen**
-            df_boxes["maße"] = df_boxes.apply(lambda row: f"{row['breite']} x {row['laenge']} mm" if pd.notna(row["breite"]) and pd.notna(row["laenge"]) else None, axis=1)
+            # Der formatierte Maß-String entsteht erst nach dem Abgleich über
+            # alle Ansichten, weil sich die Längen dort noch ändern können.
 
 
 
 
 
-            # 📌 **Farberkennung hinzufügen**
+            # Farberkennung hinzufügen
             for index, row in df_boxes.iterrows():
                 if row["class"] in color_detection_classes:
                     try:
@@ -214,7 +236,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                         absolute_crop_path = os.path.join("static", crop_path)  # Absoluten Pfad erstellen
 
                         if not os.path.exists(absolute_crop_path):
-                            print(f"⚠️ Datei existiert nicht: {absolute_crop_path}")
+                            print(f"Datei existiert nicht: {absolute_crop_path}")
                             df_boxes.at[index, "farbe"] = "Fehler: Datei fehlt"
                             continue  # Springe zur nächsten Zeile, wenn die Datei fehlt
 
@@ -230,7 +252,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
 
 
                     except Exception as e:
-                        print(f"❌ Fehler bei Farberkennung für {row['class']}: {e}")
+                        print(f"Fehler bei Farberkennung für {row['class']}: {e}")
                         df_boxes.at[index, "farbe"] = "Fehler bei Farberkennung"
 
                 if row["class"] in beschichtung_detection_classes:
@@ -239,7 +261,7 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                         absolute_crop_path = os.path.join("static", crop_path)  # Absoluten Pfad erstellen
 
                         if not os.path.exists(absolute_crop_path):
-                            print(f"⚠️ Datei existiert nicht: {absolute_crop_path}")
+                            print(f"Datei existiert nicht: {absolute_crop_path}")
                             df_boxes.at[index, "farbe"] = "Fehler: Datei fehlt"
                             continue  # Springe zur nächsten Zeile, wenn die Datei fehlt
 
@@ -252,35 +274,84 @@ def process_images(files: list[UploadFile], class_confidence=0.4, save_images: b
                             "confidence": color_result.get('confidence', 0.0)
                         }
                     except Exception as e:
-                        print(f"❌ Fehler bei Beschichtungsrkennung für {row['class']}: {e}")
+                        print(f"Fehler bei Beschichtungsrkennung für {row['class']}: {e}")
                         df_boxes.at[index, "farbe"] = "Fehler bei Beschichtungsrkennung"
 
 
 
-                if row["class"] == "Gerade":
-                    try:
-                        df_boxes.at[index, "class"] = f"{row['class']} {row['laenge']}"
+            # Erfassung als Trainingsmaterial sichern: Bild, YOLO-Labels und
+            # Metadaten. Fehlschläge bleiben folgenlos - die Erkennung selbst
+            # hängt nicht davon ab.
+            try:
+                bild_hoehe, bild_breite = image_np.shape[:2]
+                klassen_ids = {name: kid for kid, name in results1[0].names.items()}
+                training_collector.save_training_data(
+                    original_image_path=original_path,
+                    df_boxes=df_boxes,
+                    original_filename=original_filename,
+                    bild_breite=bild_breite,
+                    bild_hoehe=bild_hoehe,
+                    class_ids=klassen_ids,
+                )
+            except Exception as e:
+                print(f"Trainingsdaten konnten nicht gesichert werden: {e}")
 
-                    except Exception as e:
-                        print(f"❌ Fehler bei Geradenbenennung für {row['class']}: {e}")
-
-
-
-
-            # 📌 **Speichere DataFrame für das aktuelle Bild**
+            # Speichere DataFrame für das aktuelle Bild
             image_results[original_filename] = df_boxes
             print(f"File {original_filename}: {df_boxes}")
 
-            image_np = draw_bounding_boxes(image_np, final_boxes, final_scores, final_classes, results1[0].names, df_boxes)
-
-
-            # 📌 **Speichere das Bild mit Bounding Boxen**
-            processed_image_path = os.path.join(processed_images_dir, original_filename)
-            cv2.imwrite(processed_image_path, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
+            # Beschriften und Speichern erst nach dem Abgleich über alle
+            # Ansichten, damit die eingezeichneten Maße den finalen entsprechen.
+            pending_annotations.append({
+                "filename": original_filename,
+                "image_np": image_np,
+                "boxes": final_boxes,
+                "scores": final_scores,
+                "classes": final_classes,
+                "names": results1[0].names,
+            })
 
         except Exception as e:
             print(f"Fehler beim Verarbeiten von {file.filename}: {e}")
             continue
+
+    # Maße über alle Ansichten abgleichen
+    # Die Systemtiefe ist innerhalb eines Möbels einheitlich und in der
+    # Seitenansicht unverkürzt messbar - erst danach stehen die Feldkanten fest,
+    # aus denen sich die Diagonalen ableiten.
+    image_results = reconcile_measurements(image_results)
+
+    # Geraden nach ihrer Länge benennen (z.B. "Gerade 540")
+    for df_boxes in image_results.values():
+        for index, row in df_boxes.iterrows():
+            if row["class"] != "Gerade":
+                continue
+            try:
+                if pd.notna(row["laenge"]):
+                    df_boxes.at[index, "class"] = f"{row['class']} {int(row['laenge'])}"
+            except Exception as e:
+                print(f"Fehler bei Geradenbenennung für {row['class']}: {e}")
+
+    # Maße als formatierten String hinzufügen
+    for df_boxes in image_results.values():
+        df_boxes["maße"] = df_boxes.apply(
+            lambda row: f"{row['breite']} x {row['laenge']} mm"
+            if pd.notna(row["breite"]) and pd.notna(row["laenge"]) else None,
+            axis=1,
+        )
+
+    # Bounding Boxen einzeichnen und Bild speichern
+    for annotation in pending_annotations:
+        try:
+            df_boxes = image_results.get(annotation["filename"])
+            annotated = draw_bounding_boxes(
+                annotation["image_np"], annotation["boxes"], annotation["scores"],
+                annotation["classes"], annotation["names"], df_boxes,
+            )
+            processed_image_path = os.path.join(processed_images_dir, annotation["filename"])
+            cv2.imwrite(processed_image_path, cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR))
+        except Exception as e:
+            print(f"Fehler beim Zeichnen von {annotation['filename']}: {e}")
 
     #print(f"processImage - Image Results: {image_results.keys()}")  # Debug-Print
 

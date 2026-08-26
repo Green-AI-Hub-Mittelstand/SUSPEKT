@@ -2,6 +2,23 @@
 
 {% block title %}Fehler{% endblock %}
 
+{% block extra_css %}
+<style>
+.card { border-radius: var(--radius); }
+.card-header { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.alert { border-radius: var(--radius); }
+
+@media (max-width: 480px) {
+    .error-actions .btn {
+        display: block;
+        width: 100%;
+        margin: 0 0 0.75rem;
+    }
+    .error-actions .btn:last-child { margin-bottom: 0; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -14,9 +31,9 @@
                     <div class="alert alert-danger">
                         {{ message }}
                     </div>
-                    <div class="text-center mt-4">
+                    <div class="text-center mt-4 error-actions">
                         <a href="/" class="btn btn-primary">Zurück zur Startseite</a>
-                        <a href="javascript:history.back()" class="btn btn-outline-secondary ml-2">Zurück zur vorherigen Seite</a>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary ms-2">Zurück zur vorherigen Seite</a>
                     </div>
                 </div>
             </div>

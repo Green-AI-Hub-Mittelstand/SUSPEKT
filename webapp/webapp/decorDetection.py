@@ -133,11 +133,11 @@ class UnidekorDetector:
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         """
         if not os.path.exists(image_path):
-            raise ValueError(f"⚠ Fehler: Datei existiert nicht: {image_path}")
+            raise ValueError(f"Fehler: Datei existiert nicht: {image_path}")
 
         image = cv2.imread(image_path)
         if image is None:
-            raise ValueError(f"⚠ Fehler: Bild konnte nicht geladen werden ({image_path})")
+            raise ValueError(f"Fehler: Bild konnte nicht geladen werden ({image_path})")
 
         # Konvertiere zu RGB
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -257,7 +257,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-templates = Jinja2Templates(directory="templates")
+from .templating import templates
 
 
 detector = UnidekorDetector()

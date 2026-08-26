@@ -84,176 +84,16 @@
 
                 <div class="form-actions">
                     <button type="submit" class="submit-button">
-                        <i class="fas fa-save"></i> Daten in Neo4j speichern
+                        <i class="fas fa-save"></i> Zur Aufnahme ins digitale Lager einreichen
                     </button>
                 </div>
                 <input type="hidden" id="deleted_rows" name="deleted_rows" value="[]">
             </form>
         </div>
 
-        <!-- Tabellen-Sektion -->
-        <div class="table-section">
-            <div class="section-title">
-                <i class="fas fa-tags"></i> Erkannte Objekte
-            </div>
-
-            <div class="table-container">
-                <div class="table-controls">
-                    <div class="table-search">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="globalSearch" placeholder="Suche in allen Spalten..." class="global-search">
-                    </div>
-                </div>
-
-                <div class="responsive-table">
-                    <table id="dataTable">
-                        <thead>
-                            <tr>
-                                <th>ID <div class="filter-container"><input type="text" class="filter-input" data-column="0" placeholder="Filter..."></div></th>
-                                <th>Aktionen</th>
-                                <th>Klasse <div class="filter-container"><input type="text" class="filter-input" data-column="1" placeholder="Filter..."></div></th>
-                                <th>Genauigkeit <div class="filter-container"><input type="text" class="filter-input" data-column="2" placeholder="Filter..."></div></th>
-                                <th>Bild</th>
-                                <th>Farbe <div class="filter-container"><input type="text" class="filter-input" data-column="4" placeholder="Filter..."></div></th>
-                                <th>Zustand <div class="filter-container"><input type="text" class="filter-input" data-column="5" placeholder="Filter..."></div></th>
-                                <th>Wiederverwendbar</th>
-                                <th>Gewicht (g) <div class="filter-container"><input type="text" class="filter-input" data-column="7" placeholder="Filter..."></div></th>
-                                <th>Typ <div class="filter-container"><input type="text" class="filter-input" data-column="8" placeholder="Filter..."></div></th>
-                                <th>Maße (mm) <div class="filter-container"><input type="text" class="filter-input" data-column="9" placeholder="Filter..."></div></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if image_results %}
-                                {% if image_results.items() is defined %}
-                                    {% for image, df in image_results.items() %}
-                                        {% for row in df %}
-                                            <tr data-row-id="{{ loop.index }}">
-                                                <td>{{ loop.index }}</td>
-                                                <td>
-                                                    <button type="button" class="delete-row-btn" data-row-id="{{ loop.index }}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                                <td>{{ row.class }}</td>
-                                                <td>
-                                                    <div class="progress-container">
-                                                        <div class="progress-bar" style="width: {{ (row.confidence * 100) | round }}%"></div>
-                                                        <span class="progress-text">{{ (row.confidence * 100) | round }}%</span>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="crop-container">
-                                                        <img src="/static/{{ row.crop_path }}" class="crop-image" alt="Objekt Ausschnitt" onclick="openModal('/static/{{ row.crop_path }}')">
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    {% if row.farbe and row.farbe.hex_code %}
-                                                        <div class="color-info">
-                                                            <span class="color-sample" style="background-color: {{ row.farbe.hex_code }}"></span>
-                                                            {{ row.farbe.erkannte_farbe }}
-                                                        </div>
-                                                    {% else %}
-                                                        -
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if row.zustand == "unbeschädigt" %}
-                                                        <span class="condition-badge condition-good">{{ row.zustand }}</span>
-                                                    {% else %}
-                                                        <span class="condition-badge condition-damaged">{{ row.zustand }}</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="center-align">
-                                                    <div class="checkbox-wrapper">
-                                                        <input type="checkbox" id="reusable_{{ loop.index }}" name="reusable_{{ loop.index }}" value="true"
-                                                               {% if row.reusable %}checked{% endif %} class="custom-checkbox">
-                                                        <label for="reusable_{{ loop.index }}" class="checkbox-label"></label>
-                                                    </div>
-                                                </td>
-                                                <td>{{ row.gewicht }}</td>
-                                                <td>{{ row.typ }}</td>
-                                                <td>
-                                                    {% if row.breite and row.laenge %}
-                                                        {{ row.breite }} × {{ row.laenge }}
-                                                    {% elif row.laenge %}
-                                                        {{ row.laenge }}
-                                                    {% else %}
-                                                        -
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    {% endfor %}
-                                {% else %}
-                                    {% for row in image_results %}
-                                        <tr data-row-id="{{ loop.index }}">
-                                            <td>{{ loop.index }}</td>
-                                            <td>
-                                                <button type="button" class="delete-row-btn" data-row-id="{{ loop.index }}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </td>
-                                            <td>{{ row.class }}</td>
-                                            <td>
-                                                <div class="progress-container">
-                                                    <div class="progress-bar" style="width: {{ (row.confidence * 100) | round }}%"></div>
-                                                    <span class="progress-text">{{ (row.confidence * 100) | round }}%</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                    <div class="crop-container">
-                                                        <img src="/static/{{ row.crop_path }}" class="crop-image" alt="Objekt Ausschnitt" onclick="openModal('/static/{{ row.crop_path }}')">
-                                                    </div>
-                                            </td>
-                                            <td>
-                                                {% if row.farbe and row.farbe.hex_code %}
-                                                    <div class="color-info">
-                                                        <span class="color-sample" style="background-color: {{ row.farbe.hex_code }}"></span>
-                                                        {{ row.farbe.erkannte_farbe }}
-                                                    </div>
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if row.zustand == "unbeschädigt" %}
-                                                    <span class="condition-badge condition-good">{{ row.zustand }}</span>
-                                                {% else %}
-                                                    <span class="condition-badge condition-damaged">{{ row.zustand }}</span>
-                                                {% endif %}
-                                            </td>
-                                            <td class="center-align">
-                                                <div class="checkbox-wrapper">
-                                                    <input type="checkbox" id="reusable_{{ loop.index }}" name="reusable_{{ loop.index }}" value="true"
-                                                           {% if row.reusable %}checked{% endif %} class="custom-checkbox">
-                                                    <label for="reusable_{{ loop.index }}" class="checkbox-label"></label>
-                                                </div>
-                                            </td>
-                                            <td>{{ row.gewicht }}</td>
-                                            <td>{{ row.typ }}</td>
-                                            <td>
-                                                {% if row.breite and row.laenge %}
-                                                    {{ row.breite }} × {{ row.laenge }}
-                                                {% elif row.laenge %}
-                                                    {{ row.laenge }}
-                                                {% else %}
-                                                    -
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                {% endif %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="11" class="no-data">❌ Keine Daten gefunden</td>
-                                </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-
-                </div>
-            </div>
-        </div>
+        <!-- Die Liste der erkannten Objekte steht bewusst nicht mehr hier:
+             korrigiert wird auf der Ergebnisseite, geprüft wird anschließend
+             von System 180 unter /freigabe. -->
     </div>
 </div>
 {% endblock %}
@@ -262,20 +102,22 @@
 <style>
     /* Hauptcontainer Styling */
     .app-container {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: #333;
-        background-color: #f5f7fa;
+        font-family: var(--font);
+        color: var(--c-text);
+        background-color: var(--c-gray-50);
     }
 
     /* Header */
     .header-section {
-        width: 100%;
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
         margin-bottom: 2rem;
     }
 
     .header-image-container {
         position: relative;
-        height: 250px;
+        height: clamp(180px, 20vw, 320px);
         overflow: hidden;
     }
 
@@ -323,21 +165,20 @@
 
     /* Abschnitte */
     .section-title {
-        background: linear-gradient(135deg, #2196F3, #1565C0);
-        color: white;
+        background: var(--c-black);
+        color: var(--c-white);
         padding: 1rem 1.5rem;
         font-size: 1.2rem;
         font-weight: 600;
-        border-radius: 6px 6px 0 0;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
     .form-section, .table-section {
-        background-color: white;
-        border-radius: 6px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        background-color: var(--c-white);
+        border: 1px solid var(--c-border);
+        box-shadow: var(--shadow-sm);
         margin-bottom: 2rem;
         overflow: hidden;
     }
@@ -361,7 +202,7 @@
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 500;
-        color: #333;
+        color: var(--c-text);
     }
 
     .form-group input,
@@ -369,22 +210,22 @@
     .form-group textarea {
         width: 100%;
         padding: 0.7rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background-color: #f8f9fa;
+        border: 1px solid var(--c-gray-300);
+        border-radius: var(--radius);
+        background-color: var(--c-gray-50);
         transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
-        border-color: #2196F3;
-        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+        border-color: var(--c-black);
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
         outline: none;
     }
 
     .form-group input[readonly] {
-        background-color: #e9ecef;
+        background-color: var(--c-gray-200);
         cursor: not-allowed;
     }
 
@@ -401,8 +242,8 @@
     #map {
         height: 400px;
         width: 100%;
-        border: 1px solid #ddd;
-        border-radius: 6px;
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
         overflow: hidden;
     }
 
@@ -414,10 +255,10 @@
 
     .submit-button {
         padding: 0.8rem 1.5rem;
-        background-color: #4CAF50;
-        color: white;
+        background-color: var(--c-black);
+        color: var(--c-white);
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius);
         cursor: pointer;
         font-size: 1rem;
         font-weight: 500;
@@ -425,11 +266,11 @@
         align-items: center;
         gap: 0.75rem;
         transition: background-color 0.2s, transform 0.1s;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .submit-button:hover {
-        background-color: #388E3C;
+        background-color: var(--c-gray-900);
     }
 
     .submit-button:active {
@@ -450,15 +291,16 @@
     .table-search {
         display: flex;
         align-items: center;
-        background-color: #f8f9fa;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        background-color: var(--c-gray-50);
+        border: 1px solid var(--c-gray-300);
+        border-radius: var(--radius);
         padding: 0.5rem 0.75rem;
         width: 300px;
+        max-width: 100%;
     }
 
     .table-search i {
-        color: #666;
+        color: var(--c-gray-500);
         margin-right: 0.5rem;
     }
 
@@ -471,8 +313,9 @@
 
     .responsive-table {
         overflow-x: auto;
-        border-radius: 4px;
-        border: 1px solid #e0e0e0;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius);
+        border: 1px solid var(--c-border);
     }
 
     table {
@@ -485,24 +328,24 @@
     th, td {
         padding: 0.75rem 1rem;
         text-align: left;
-        border-bottom: 1px solid #e0e0e0;
+        border-bottom: 1px solid var(--c-border);
     }
 
     th {
-        background-color: #f5f7fa;
+        background-color: var(--c-gray-50);
         font-weight: 600;
-        color: #333;
+        color: var(--c-text);
         position: sticky;
         top: 0;
         z-index: 10;
     }
 
     td {
-        color: #444;
+        color: var(--c-gray-700);
     }
 
     tbody tr:hover {
-        background-color: #f9f9f9;
+        background-color: var(--c-gray-50);
     }
 
     .filter-container {
@@ -512,16 +355,16 @@
     .filter-input {
         width: 100%;
         padding: 0.4rem;
-        border: 1px solid #ddd;
-        border-radius: 3px;
+        border: 1px solid var(--c-gray-300);
+        border-radius: var(--radius);
         font-size: 0.85rem;
     }
 
     /* Fortschrittsbalken */
     .progress-container {
         width: 100%;
-        background-color: #e9ecef;
-        border-radius: 10px;
+        background-color: var(--c-gray-200);
+        border-radius: var(--radius);
         height: 20px;
         position: relative;
         overflow: hidden;
@@ -529,8 +372,8 @@
 
     .progress-bar {
         height: 100%;
-        background-color: #4CAF50;
-        border-radius: 10px;
+        background-color: var(--c-black);
+        border-radius: var(--radius);
         transition: width 0.3s;
     }
 
@@ -551,16 +394,16 @@
         align-items: center;
         gap: 0.4rem;
         padding: 0.3rem 0.7rem;
-        background-color: #e3f2fd;
-        color: #1976D2;
-        border-radius: 4px;
+        background-color: var(--c-gray-100);
+        color: var(--c-gray-900);
+        border-radius: var(--radius);
         font-size: 0.85rem;
         text-decoration: none;
         transition: background-color 0.2s;
     }
 
     .image-link:hover {
-        background-color: #bbdefb;
+        background-color: var(--c-gray-200);
     }
 
     /* Farbprobe */
@@ -573,10 +416,10 @@
     .color-sample {
         width: 20px;
         height: 20px;
-        border-radius: 4px;
+        border-radius: var(--radius);
         display: inline-block;
         border: 1px solid rgba(0,0,0,0.1);
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     /* Zustand Badge */
@@ -631,15 +474,15 @@
         top: 0;
         width: 18px;
         height: 18px;
-        border: 2px solid #aaa;
-        background: #fff;
-        border-radius: 3px;
+        border: 2px solid var(--c-gray-400);
+        background: var(--c-white);
+        border-radius: var(--radius);
         box-sizing: border-box;
     }
 
     .custom-checkbox:checked + .checkbox-label:before {
-        background: #4CAF50;
-        border-color: #4CAF50;
+        background: var(--c-black);
+        border-color: var(--c-black);
     }
 
     .custom-checkbox:checked + .checkbox-label:after {
@@ -658,22 +501,26 @@
     .no-data {
         text-align: center;
         padding: 2rem;
-        color: #666;
+        color: var(--c-gray-500);
         font-style: italic;
+    }
+
+    .no-data i {
+        margin-right: 0.4rem;
     }
 
     /* Adresssuche */
     .search-results {
         position: absolute;
         z-index: 1000;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 0 0 4px 4px;
+        background: var(--c-white);
+        border: 1px solid var(--c-gray-300);
+        border-radius: 0 0 var(--radius) var(--radius);
         max-height: 200px;
         overflow-y: auto;
         width: 100%;
         display: none;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-md);
     }
 
     /* Responsive */
@@ -697,20 +544,70 @@
         .submit-button {
             width: 100%;
         }
+
+        #map {
+            height: 260px;
+        }
+
+        .table-controls {
+            justify-content: stretch;
+        }
+
+        .table-search {
+            width: 100%;
+        }
+
+        .confirmation-content {
+            max-width: calc(100% - 2rem);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-title {
+            font-size: 1.4rem;
+        }
+
+        .header-subtitle {
+            font-size: 0.9rem;
+        }
+
+        .header-image-container {
+            height: 140px;
+        }
+
+        .order-form, .table-container {
+            padding: 1rem;
+        }
+
+        #map {
+            height: 200px;
+        }
+
+        .confirmation-content {
+            padding: 1.25rem;
+        }
+
+        .confirmation-actions {
+            flex-direction: column;
+        }
+
+        .confirm-btn, .cancel-btn {
+            width: 100%;
+        }
     }
     /* Löschbutton Styling */
 .delete-row-btn {
-    background-color: #f44336;
-    color: white;
+    background-color: var(--c-danger);
+    color: var(--c-white);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius);
     padding: 0.5rem;
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .delete-row-btn:hover {
-    background-color: #d32f2f;
+    background-color: #b71c1c;
 }
 
 /* Animation für das Löschen */
@@ -738,12 +635,12 @@
 }
 
 .confirmation-content {
-    background-color: white;
+    background-color: var(--c-white);
     padding: 2rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     max-width: 400px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .confirmation-actions {
@@ -754,19 +651,19 @@
 }
 
 .confirm-btn {
-    background-color: #f44336;
-    color: white;
+    background-color: var(--c-danger);
+    color: var(--c-white);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius);
     padding: 0.7rem 1.5rem;
     cursor: pointer;
 }
 
 .cancel-btn {
-    background-color: #757575;
-    color: white;
+    background-color: var(--c-gray-600);
+    color: var(--c-white);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius);
     padding: 0.7rem 1.5rem;
     cursor: pointer;
 }
@@ -977,7 +874,7 @@
             });
 
             // Zeichne neue Linie
-            const polyline = L.polyline([system180Location, [lat, lon]], {color: '#2196F3', weight: 3}).addTo(map);
+            const polyline = L.polyline([system180Location, [lat, lon]], {color: '#111111', weight: 3}).addTo(map);
 
             // Karte so zoomen, dass beide Marker sichtbar sind
             const bounds = L.latLngBounds(system180Location, [lat, lon]);
@@ -1088,7 +985,7 @@ function initRowDeletion() {
                     // Überprüfen, ob die Tabelle leer ist
                     const tbody = document.querySelector('#dataTable tbody');
                     if (tbody.children.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="11" class="no-data">❌ Keine Daten gefunden</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="11" class="no-data"><i class="fas fa-circle-xmark"></i> Keine Daten gefunden</td></tr>';
                     }
                 });
 

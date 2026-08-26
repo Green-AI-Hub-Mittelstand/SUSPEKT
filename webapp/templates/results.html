@@ -6,20 +6,19 @@
 <style>
     /* Hauptcontainer Styling */
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f7fa;
-        color: #333;
+        font-family: var(--font);
+        background-color: var(--c-gray-50);
+        color: var(--c-text);
     }
 
     /* Header Styling */
     .results-header {
-        background: linear-gradient(135deg, #2196F3, #1565C0);
-        color: white;
+        background: var(--c-black);
+        color: var(--c-white);
         padding: 2rem 0;
         margin-bottom: 2rem;
         text-align: center;
-        border-radius: 0 0 10px 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-md);
     }
 
     .results-header h1 {
@@ -41,34 +40,135 @@
         padding: 0 1.5rem 3rem;
     }
 
+    /* Eine Spalte, damit die Objektliste die volle Breite nutzt und nicht auf
+       die Breite des hochgeladenen Bildes zusammenschrumpft. */
     .results-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+        grid-template-columns: 1fr;
         gap: 1.5rem;
         margin-bottom: 2rem;
     }
 
+    /* Bild links, Liste der erkannten Objekte rechts. */
+    .image-body {
+        display: grid;
+        grid-template-columns: minmax(240px, 340px) 1fr;
+        align-items: start;
+    }
+
+    .detected-objects {
+        min-width: 0;
+        border-left: 1px solid var(--c-border);
+    }
+
+    /* Gesamtübersicht / Stückliste */
+    .stueckliste {
+        background-color: var(--c-white);
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        padding: 1.25rem 1.5rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stueckliste-kopf {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .stueckliste-kopf h2 { margin: 0; font-size: 1.25rem; }
+
+    .raster-info { font-size: 0.85rem; color: var(--c-gray-600); }
+
+    .stueckliste-hinweis, .stueckliste-warnung {
+        font-size: 0.85rem;
+        color: var(--c-gray-600);
+        margin: 0.6rem 0 1rem;
+    }
+
+    .stueckliste-warnung {
+        margin: 1rem 0 0;
+        padding: 0.7rem 0.9rem;
+        background-color: var(--c-gray-50);
+        border-left: 3px solid var(--c-gray-400);
+    }
+
+    .stueckliste-tabelle { width: 100%; border-collapse: collapse; }
+
+    .stueckliste-tabelle th {
+        text-align: left;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--c-gray-600);
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--c-border);
+        white-space: nowrap;
+    }
+
+    .stueckliste-tabelle td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--c-gray-100);
+        font-size: 0.9rem;
+    }
+
+    .stueckliste-tabelle .anzahl { font-weight: 700; white-space: nowrap; }
+    .stueckliste-tabelle .grundlage { color: var(--c-gray-500); font-size: 0.82rem; }
+
+    .rolle-badge {
+        display: inline-block;
+        margin-left: 0.35rem;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--c-gray-600);
+        background-color: var(--c-gray-50);
+        border: 1px solid var(--c-border);
+        border-radius: 999px;
+    }
+
+    .herkunft-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    /* Aus dem Raster berechnet ist belastbarer als gezählt. */
+    .herkunft-Raster { background-color: var(--c-accent-bg); color: var(--c-accent); }
+    .herkunft-abgeleitet { background-color: var(--c-accent-bg); color: var(--c-accent); }
+    .herkunft-gezählt { background-color: var(--c-gray-50); color: var(--c-gray-600); }
+    /* Angenommen = aus der Gegenseite geschlossen, nicht fotografiert. */
+    .herkunft-angenommen { background-color: #fdf3e2; color: #8a5a00; }
+
+    .tabellen-rahmen { overflow-x: auto; }
+
     /* Bild-Container */
     .image-container {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        background: var(--c-white);
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
         overflow: hidden;
         transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .image-container:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     }
 
     /* Dateiname */
     .filename {
-        background: #f8f9fa;
-        color: #1976D2;
+        background: var(--c-gray-50);
+        color: var(--c-ink);
         font-weight: 600;
         padding: 1rem 1.5rem;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--c-border);
         font-size: 1.1rem;
         display: flex;
         align-items: center;
@@ -78,7 +178,7 @@
         content: '\f15b';
         font-family: 'Font Awesome 5 Free';
         margin-right: 0.75rem;
-        color: #1976D2;
+        color: var(--c-gray-700);
     }
 
     /* Erkanntes Bild */
@@ -88,9 +188,13 @@
 
     .detected-image img {
         width: 100%;
-        border-radius: 6px;
+        /* Hochformatige Aufnahmen sonst das gesamte Layout dominieren lassen;
+           für Details gibt es das Modal per Klick. */
+        max-height: 70vh;
+        object-fit: contain;
+        border-radius: var(--radius);
         transition: transform 0.3s;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .detected-image img:hover {
@@ -101,17 +205,17 @@
     /* Klassen-Liste */
     .classes-list-header {
         padding: 1rem 1.5rem;
-        background: #f8f9fa;
-        border-top: 1px solid #eee;
+        background: var(--c-gray-50);
+        border-top: 1px solid var(--c-border);
         font-weight: 600;
         display: flex;
         align-items: center;
-        color: #333;
+        color: var(--c-text);
     }
 
     .classes-list-header i {
         margin-right: 0.5rem;
-        color: #2196F3;
+        color: var(--c-gray-700);
     }
 
     .classes-list {
@@ -120,15 +224,20 @@
 
     /* Klassen-Karten */
     .class-card {
-        margin-bottom: 0.5rem;
-        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        border-radius: var(--radius);
         overflow: hidden;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--c-border);
+        transition: box-shadow 0.2s;
+    }
+
+    .class-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
     }
 
     .class-header {
-        background: linear-gradient(to right, #f5f7fa, #e8edf2);
+        background: var(--c-gray-50);
         padding: 0.6rem 0.8rem;
         font-weight: 500;
         display: flex;
@@ -136,19 +245,19 @@
         align-items: center;
         cursor: pointer;
         transition: background-color 0.2s;
-        color: #444;
+        color: var(--c-gray-700);
         font-size: 0.95rem;
     }
 
     .class-header:hover {
-        background: linear-gradient(to right, #e8edf2, #d9e2ec);
+        background: var(--c-gray-100);
     }
 
     .class-header:after {
         content: '\f107';
         font-family: 'Font Awesome 5 Free';
         font-weight: 900;
-        color: #666;
+        color: var(--c-gray-600);
         transition: transform 0.3s;
         font-size: 0.9rem;
     }
@@ -157,16 +266,21 @@
         transform: rotate(180deg);
     }
 
+    /* Ausschnitt links, Daten rechts. Die Höhe wird per JS auf den tatsächlichen
+       Inhalt gesetzt, damit bei hochformatigen Crops nichts abgeschnitten wird. */
     .class-content {
+        display: grid;
+        grid-template-columns: minmax(120px, 170px) 1fr;
+        gap: 0.9rem;
+        align-items: start;
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-out, padding 0.3s ease;
-        background-color: white;
+        background-color: var(--c-white);
         padding: 0 0.8rem;
     }
 
     .class-content.active {
-        max-height: 800px;
         padding: 0.8rem;
     }
 
@@ -176,15 +290,15 @@
         padding: 0;
         margin: 0;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
         gap: 0.5rem;
     }
 
     .property-list li {
         padding: 0.4rem;
-        border: 1px solid #f0f0f0;
-        border-radius: 4px;
-        background-color: #fafafa;
+        border: 1px solid var(--c-gray-100);
+        border-radius: var(--radius);
+        background-color: var(--c-gray-50);
         font-size: 0.9rem;
     }
 
@@ -195,7 +309,7 @@
     .property-label {
         font-weight: 500;
         margin-bottom: 0.3rem;
-        color: #555;
+        color: var(--c-gray-600);
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -203,22 +317,26 @@
 
     /* Bild-Ausschnitt */
     .crop-container {
-        background: #f8f9fa;
+        background: var(--c-gray-50);
         padding: 0.6rem;
-        border-radius: 6px;
-        margin-bottom: 0.8rem;
+        border-radius: var(--radius);
         text-align: center;
         display: flex;
-        justify-content: flex-start;
+        justify-content: center;
+        align-items: flex-start;
     }
 
     .crop-image {
-        max-width: 120px;
+        max-width: 100%;
+        /* Hochformatige Crops sonst die Karte in die Länge ziehen und die
+           Daten daneben aus dem sichtbaren Bereich schieben. */
+        max-height: 240px;
+        width: auto;
         height: auto;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
         transition: transform 0.2s;
-        object-fit: cover;
+        object-fit: contain;
     }
 
     .crop-image:hover {
@@ -239,10 +357,10 @@
     .color-sample {
         width: 20px;
         height: 20px;
-        border-radius: 3px;
+        border-radius: var(--radius);
         display: inline-block;
         vertical-align: middle;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-sm);
         border: 1px solid rgba(0,0,0,0.1);
     }
 
@@ -256,10 +374,10 @@
     .color-confidence {
         display: inline-block;
         padding: 0.1rem 0.3rem;
-        border-radius: 10px;
+        border-radius: var(--radius);
         font-size: 0.75rem;
-        background: #e3f2fd;
-        color: #1976D2;
+        background: var(--c-gray-100);
+        color: var(--c-gray-700);
         font-weight: 500;
     }
 
@@ -272,11 +390,149 @@
     }
 
     .color-details div {
-        background: white;
+        background: var(--c-white);
         padding: 0.2rem 0.4rem;
-        border-radius: 3px;
+        border-radius: var(--radius);
         font-size: 0.8rem;
-        border: 1px solid #e0e0e0;
+        border: 1px solid var(--c-border);
+    }
+
+    /* Manuelle Korrektur */
+    .correction-cell { grid-column: 1 / -1; }
+
+    .correction-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .correction-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: var(--c-gray-700);
+        user-select: none;
+    }
+
+    .correction-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+    .correction-track {
+        position: relative;
+        width: 34px;
+        height: 18px;
+        background-color: var(--c-gray-300);
+        border-radius: 999px;
+        transition: background-color 0.15s;
+        flex-shrink: 0;
+    }
+
+    .correction-track:before {
+        content: '';
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        left: 3px;
+        top: 3px;
+        background-color: var(--c-white);
+        border-radius: 50%;
+        transition: transform 0.15s;
+    }
+
+    .correction-toggle input:checked + .correction-track { background-color: var(--c-black); }
+    .correction-toggle input:checked + .correction-track:before { transform: translateX(16px); }
+    .correction-toggle input:focus-visible + .correction-track { outline: 2px solid var(--c-black); outline-offset: 2px; }
+
+    .ki-result { margin-top: 0.35rem; }
+
+    .correction-form {
+        margin-top: 0.6rem;
+        padding-top: 0.6rem;
+        border-top: 1px dashed var(--c-gray-300);
+    }
+
+    .correction-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+        gap: 0.6rem;
+    }
+
+    .correction-field { display: flex; flex-direction: column; gap: 0.25rem; }
+
+    .correction-field > span {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--c-gray-600);
+    }
+
+    .correction-field select {
+        padding: 0.45rem;
+        border: 1px solid var(--c-gray-300);
+        border-radius: var(--radius);
+        background-color: var(--c-white);
+        font-size: 0.9rem;
+        width: 100%;
+    }
+
+    .reuse-check {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-top: 0.7rem;
+        font-size: 0.88rem;
+        cursor: pointer;
+    }
+
+    .reuse-hint {
+        margin: 0.7rem 0 0;
+        font-size: 0.8rem;
+        color: var(--c-gray-500);
+    }
+
+    .correction-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.7rem;
+        margin-top: 0.8rem;
+    }
+
+    .save-correction {
+        padding: 0.55rem 0.9rem;
+        background-color: var(--c-black);
+        color: var(--c-white);
+        border: 2px solid var(--c-black);
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .save-correction:hover { background-color: var(--c-white); color: var(--c-black); }
+
+    .correction-status { font-size: 0.82rem; color: var(--c-gray-600); }
+    .correction-status.is-ok { color: var(--c-success); font-weight: 700; }
+    .correction-status.is-error { color: var(--c-danger); font-weight: 700; }
+
+    .ki-detect-row { margin-top: 0.7rem; }
+
+    /* Manuell geprüfte Karte sichtbar markieren */
+    .class-card.is-corrected { border-color: var(--c-black); }
+    .class-card.is-corrected .class-header:before {
+        content: '\f00c';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        margin-right: 0.4rem;
+        font-size: 0.75rem;
     }
 
     /* Zustandsauswahl */
@@ -290,31 +546,33 @@
 
     .condition-select {
         padding: 0.4rem;
-        border-radius: 3px;
-        border: 1px solid #ccc;
-        background-color: white;
+        border-radius: var(--radius);
+        border: 1px solid var(--c-gray-300);
+        background-color: var(--c-white);
         flex-grow: 1;
         font-size: 0.85rem;
         max-width: 140px;
     }
 
     .condition-button {
-        padding: 0.4rem 0.7rem;
-        background-color: #f44336;
-        color: white;
-        border: none;
-        border-radius: 3px;
+        padding: 0.55rem 0.9rem;
+        background-color: var(--c-danger);
+        color: var(--c-white);
+        border: 2px solid var(--c-danger);
+        border-radius: var(--radius);
         cursor: pointer;
-        transition: background-color 0.2s;
-        font-weight: 500;
+        transition: background-color 0.2s, color 0.2s;
+        font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 0.3rem;
+        gap: 0.4rem;
         font-size: 0.85rem;
+        box-shadow: var(--shadow-sm);
     }
 
     .condition-button:hover {
-        background-color: #d32f2f;
+        background-color: var(--c-white);
+        color: var(--c-danger);
     }
 
     .condition-button i {
@@ -340,8 +598,8 @@
         position: relative;
         max-width: 90%;
         max-height: 90vh;
-        background: white;
-        border-radius: 8px;
+        background: var(--c-white);
+        border-radius: var(--radius);
         overflow: hidden;
         box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
         cursor: default;
@@ -385,10 +643,10 @@
 
     .save-button {
         padding: 0.8rem 1.5rem;
-        background-color: #4CAF50;
-        color: white;
+        background-color: var(--c-black);
+        color: var(--c-white);
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius);
         cursor: pointer;
         font-size: 1rem;
         font-weight: 500;
@@ -396,11 +654,11 @@
         align-items: center;
         gap: 0.75rem;
         transition: background-color 0.2s, transform 0.1s;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
     }
 
     .save-button:hover {
-        background-color: #388E3C;
+        background-color: var(--c-gray-900);
     }
 
     .save-button:active {
@@ -409,10 +667,10 @@
 
     .back-button {
         padding: 0.8rem 1.5rem;
-        background-color: #f5f5f5;
-        color: #333;
-        border: none;
-        border-radius: 6px;
+        background-color: var(--c-gray-50);
+        color: var(--c-text);
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
         cursor: pointer;
         font-size: 1rem;
         font-weight: 500;
@@ -421,11 +679,10 @@
         align-items: center;
         gap: 0.75rem;
         transition: background-color 0.2s, transform 0.1s;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .back-button:hover {
-        background-color: #e0e0e0;
+        background-color: var(--c-gray-200);
     }
 
     .back-button:active {
@@ -476,8 +733,43 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
+        .results-header {
+            padding: 1.5rem 0;
+        }
+
+        .results-header h1 {
+            font-size: 1.8rem;
+        }
+
         .results-grid {
             grid-template-columns: 1fr;
+        }
+
+        /* Auf schmalen Screens untereinander: erst das Bild, dann die Objekte,
+           innerhalb einer Karte erst der Ausschnitt, dann die Daten. */
+        .image-body {
+            grid-template-columns: 1fr;
+        }
+
+        .detected-objects {
+            border-left: none;
+            border-top: 1px solid var(--c-border);
+        }
+
+        .detected-image img {
+            max-height: 45vh;
+        }
+
+        .class-content {
+            grid-template-columns: 1fr;
+        }
+
+        .crop-container {
+            justify-content: flex-start;
+        }
+
+        .crop-image {
+            max-height: 200px;
         }
 
         .footer-actions {
@@ -488,34 +780,67 @@
             width: 100%;
             justify-content: center;
         }
+
+        .button-container {
+            flex-direction: column;
+        }
+
+        .button-container .btn {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .results-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .results-subheader {
+            font-size: 0.95rem;
+        }
+
+        .results-container {
+            padding: 0 0.75rem 2rem;
+        }
+
+        .crop-image {
+            max-height: 170px;
+        }
+
+        #ki-modal .modal-content {
+            max-width: 100%;
+        }
     }
 
     /* Neuer Button für KI-Detektion */
 .ki-button {
-    padding: 0.4rem 0.7rem;
-    background-color: #ffeb3b; /* Gelb */
-    color: #333;
-    border: none;
-    border-radius: 3px;
+    padding: 0.55rem 0.9rem;
+    background-color: var(--c-white);
+    color: var(--c-black);
+    border: 2px solid var(--c-black);
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: background-color 0.2s;
-    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: 700;
+    font-size: 0.85rem;
     margin-left: 0.5rem;
+    box-shadow: var(--shadow-sm);
 }
 .ki-button:hover {
-    background-color: #fdd835;
+    background-color: var(--c-black);
+    color: var(--c-white);
 }
 
 /* KI Modal spezifische Stile */
 #ki-modal .modal-content {
     max-width: 600px;
-    border-radius: 10px;
+    border-radius: var(--radius);
     overflow-y: auto;
 }
 #ki-modal .modal-header {
-    background-color: #f5f7fa;
+    background-color: var(--c-gray-50);
     padding: 1rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--c-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -547,17 +872,73 @@
 
 
 <div class="results-container">
+    {% if stueckliste %}
+    <div class="stueckliste">
+        <div class="stueckliste-kopf">
+            <h2>Gesamtübersicht des Möbels</h2>
+            <span class="raster-info">
+                Raster {{ stueckliste.raster.spalten }} x {{ stueckliste.raster.reihen }}
+                ({{ stueckliste.raster.reihen + 1 }} Ebenen) &middot;
+                {{ stueckliste.ansichten | join(', ') }}
+            </span>
+        </div>
+        <p class="stueckliste-hinweis">
+            Tragende Teile sind aus dem Systemraster berechnet und damit unabhängig davon,
+            wie viele davon die Erkennung gefunden hat. Einbauten werden je Ebene gezählt,
+            damit ein Bauteil nicht in zwei Ansichten doppelt erscheint.
+            Positionen mit <span class="herkunft-badge herkunft-angenommen">angenommen</span>
+            stammen von einer nicht fotografierten Gegenseite und sollten bei der Freigabe
+            geprüft werden.
+        </p>
+        <div class="tabellen-rahmen">
+            <table class="stueckliste-tabelle">
+                <thead>
+                    <tr>
+                        <th>Bauteil</th>
+                        <th>Anzahl</th>
+                        <th>Herkunft</th>
+                        <th>Grundlage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pos in stueckliste.positionen %}
+                    <tr>
+                        <td>
+                            {{ pos.bauteil }}
+                            {% if pos.rolle %}<span class="rolle-badge">{{ pos.rolle }}</span>{% endif %}
+                        </td>
+                        <td class="anzahl">{{ pos.anzahl }}x</td>
+                        <td><span class="herkunft-badge herkunft-{{ pos.herkunft }}">{{ pos.herkunft }}</span></td>
+                        <td class="grundlage">{{ pos.hinweis }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if not stueckliste.vollstaendig %}
+        <p class="stueckliste-warnung">
+            Für eine vollständige Stückliste werden vier Ansichten (Front, Rück, Links, Rechts)
+            als asymmetrische Aufnahme benötigt. Gezählte Einbauten können unvollständig sein,
+            wenn die Erkennung ein Teil übersehen hat – Maße und Anzahl lassen sich bei der
+            Freigabe korrigieren.
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <div class="results-grid">
         {% for filename in detected_images %}
         <div class="image-container">
             <div class="filename">{{ filename }}</div>
 
+            <div class="image-body">
             <div class="detected-image">
                 <img src="{{ url_for('static', path='detected_images/processed_images/' + filename) }}"
                      alt="Erkanntes Bild mit Bounding Boxen"
                      onclick="openModal(this.src)">
             </div>
 
+            <div class="detected-objects">
             <div class="classes-list-header">
                 <i class="fas fa-tags"></i> Erkannte Objekte
             </div>
@@ -614,47 +995,86 @@
                                         <div>Nicht verfügbar</div>
                                     {% endif %}
                                 </li>
-                                <li>
-                                    <span class="property-label">Zustand</span>
-                                    <div>
-                                        {{ obj.zustand }}
-                                        {% if obj.zustand == "unbeschädigt" %}
-                                            <span class="condition-badge condition-good">Wiederverwendbar</span>
-                                        {% else %}
-                                            <span class="condition-badge condition-damaged">Beschädigt</span>
-                                        {% endif %}
+                                <li class="correction-cell" data-bbox-id="{{ obj.bbox_id }}">
+                                    <div class="correction-head">
+                                        <span class="property-label">Zustand</span>
+                                        <label class="correction-toggle">
+                                            <input type="checkbox" class="correction-switch" onchange="toggleCorrection(this)">
+                                            <span class="correction-track"></span>
+                                            <span class="correction-label">Manuell korrigieren</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="ki-result">
+                                        <span class="zustand-text">{{ obj.zustand }}</span>
+                                        <span class="reuse-badge condition-badge {{ 'condition-good' if obj.reusable else 'condition-damaged' }}">{{ 'Wiederverwendbar' if obj.reusable else 'Nicht wiederverwendbar' }}</span>
                                         {% if obj.zustand_conf %}
                                             <span class="condition-badge condition-damaged">KI: {{ "%.0f"|format(obj.zustand_conf * 100) }}%</span>
                                         {% endif %}
                                         {% if obj.verdacht %}
-                                            <span class="condition-badge condition-suspect">⚠ KI-Verdacht: bitte prüfen</span>
+                                            <span class="condition-badge condition-suspect"><i class="fas fa-triangle-exclamation"></i> KI-Verdacht: bitte prüfen</span>
                                         {% endif %}
                                     </div>
-                                    <form class="condition-form" onsubmit="updateCondition(event, this)">
+
+                                    <form class="correction-form" hidden onsubmit="saveCorrection(event, this)">
                                         <input type="hidden" name="filename" value="{{ filename }}">
                                         <input type="hidden" name="bbox_id" value="{{ obj.bbox_id }}">
-                                        <input type="hidden" name="reusable" id="reusable_{{ obj.bbox_id }}" value="{{ 'true' if obj.reusable else 'false' }}">
 
-                                        <select name="zustand" class="condition-select" onchange="handleConditionChange(this, '{{ obj.bbox_id }}')">
-                                            <option value="unbeschädigt" {% if obj.zustand not in ["MDF-Platzer", "Rohr_Kratzer", "Delle"] %}selected{% endif %}>Unbeschädigt</option>
-                                            <option value="MDF-Platzer" {% if obj.zustand == "MDF-Platzer" %}selected{% endif %}>MDF-Platzer</option>
-                                            <option value="Rohr_Kratzer" {% if obj.zustand == "Rohr_Kratzer" %}selected{% endif %}>Rohr-Kratzer</option>
-                                            <option value="Delle" {% if obj.zustand == "Delle" %}selected{% endif %}>Delle</option>
-                                        </select>
+                                        <div class="correction-grid">
+                                            <label class="correction-field">
+                                                <span>Bauteil</span>
+                                                <select name="bauteil" onchange="onBauteilChange(this)">
+                                                    {% for name in bauteil_optionen %}
+                                                    <option value="{{ name }}" {% if obj.class.split(' ')[0] == name %}selected{% endif %}>{{ name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </label>
 
-                                        <button type="button" class="ki-button" onclick="openKIModal('{{ obj.class }}', '{{ obj.bbox_id }}', '{{ obj.crop_path }}', '{{ filename }}')">
-                                            KI-Detektion
-                                        </button>
+                                            <label class="correction-field breite-field" hidden>
+                                                <span class="breite-label">Breite (mm)</span>
+                                                <select name="breite" data-current="{{ obj.breite if obj.breite else '' }}"></select>
+                                            </label>
 
+                                            <label class="correction-field laenge-field">
+                                                <span class="laenge-label">Länge (mm)</span>
+                                                <select name="laenge" data-current="{{ obj.laenge if obj.laenge else '' }}"></select>
+                                            </label>
 
+                                            <label class="correction-field">
+                                                <span>Farbe</span>
+                                                <select name="farbe">
+                                                    <option value="">– unverändert –</option>
+                                                    {% for name in farb_optionen %}
+                                                    <option value="{{ name }}" {% if obj.farbe and obj.farbe.erkannte_farbe == name %}selected{% endif %}>{{ name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </label>
 
+                                            <label class="correction-field">
+                                                <span>Zustand</span>
+                                                <select name="zustand" onchange="onZustandChange(this)">
+                                                    {% for z in zustand_optionen %}
+                                                    <option value="{{ z }}" {% if obj.zustand == z %}selected{% endif %}>{{ z }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </label>
+                                        </div>
 
+                                        <label class="reuse-check" hidden>
+                                            <input type="checkbox" name="reusable" value="true" {% if obj.reusable %}checked{% endif %}>
+                                            <span>Trotz Schaden wiederverwendbar</span>
+                                        </label>
+                                        <p class="reuse-hint">Unbeschädigte Bauteile sind immer wiederverwendbar.</p>
 
-                                        <button type="submit" class="condition-button">
-                                            <i class="fas fa-exclamation-triangle"></i>
-                                            Melden
-                                        </button>
+                                        <div class="correction-actions">
+                                            <button type="submit" class="save-correction"><i class="fas fa-check"></i> Korrektur übernehmen</button>
+                                            <span class="correction-status"></span>
+                                        </div>
                                     </form>
+
+                                    <div class="ki-detect-row">
+                                        <button type="button" class="ki-button" onclick="openKIModal('{{ obj.class }}', '{{ obj.bbox_id }}', '{{ obj.crop_path }}', '{{ filename }}')">KI-Detektion</button>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
@@ -663,6 +1083,8 @@
                 {% else %}
                     <div class="no-objects">Keine Objekte erkannt</div>
                 {% endif %}
+            </div>
+            </div>
             </div>
         </div>
         {% endfor %}
@@ -678,7 +1100,7 @@
             <input type="hidden" id="image_results" name="image_results" value='{{ image_results | tojson | safe }}'>
             <button type="submit" class="save-button">
                 <i class="fas fa-save"></i>
-                In Datenbank speichern
+                Weiter zu den Auftragsdaten
             </button>
         </form>
     </div>
@@ -696,7 +1118,7 @@
 <div id="ki-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Beschädigung Melden</h2>
+            <h2>KI-Schadenserkennung</h2>
             <span class="close-ki-modal" style="cursor: pointer;">&times;</span>
         </div>
         <div class="modal-body">
@@ -706,7 +1128,7 @@
                 <h2>Zustand: <span id="ki-part-condition">Unknown</span></h2>
 
                 <img id="ki-image" src="" alt="Objekt Ausschnitt" class="crop-image"
-     style="max-width: 100%; max-height: 300px; border: 2px solid #ddd; border-radius: 8px; padding: 5px; background-color: #f8f9fa;">
+     style="max-width: 100%; max-height: 300px; border: 2px solid var(--c-border); border-radius: var(--radius); padding: 5px; background-color: var(--c-gray-50);">
 
             </div>
             <!-- Formular mit File-Input und Buttons -->
@@ -762,6 +1184,14 @@ if (message) {
 
 
     // Klassen-Karten umschalten
+    // Höhe einer geöffneten Karte auf ihren tatsächlichen Inhalt setzen. Ein
+    // fester Wert schnitt bei hochformatigen Crops die unteren Angaben ab.
+    function fitCardHeight(content) {
+        if (content && content.classList.contains('active')) {
+            content.style.maxHeight = content.scrollHeight + 'px';
+        }
+    }
+
     function toggleCard(header) {
         const content = header.nextElementSibling;
 
@@ -770,15 +1200,28 @@ if (message) {
 
             if (content.classList.contains('active')) {
                 content.classList.remove('active');
-                setTimeout(() => {
-                    content.style.padding = '0 1.2rem';
-                }, 300);
+                content.style.maxHeight = '0';
             } else {
                 content.classList.add('active');
-                content.style.padding = '1.2rem';
+                fitCardHeight(content);
+
+                // Crops liefern ihre Maße erst nach dem Laden nach.
+                content.querySelectorAll('img').forEach(img => {
+                    if (!img.complete) {
+                        img.addEventListener('load', () => fitCardHeight(content), { once: true });
+                    }
+                });
             }
         }
     }
+
+    // Nach Layoutwechseln (Drehen, Fenstergröße) neu vermessen.
+    window.addEventListener('resize', function() {
+        document.querySelectorAll('.class-content.active').forEach(content => {
+            content.style.maxHeight = 'none';
+            content.style.maxHeight = content.scrollHeight + 'px';
+        });
+    });
 
     // Alle Karten beim Laden initialisieren
     document.addEventListener('DOMContentLoaded', function() {
@@ -791,77 +1234,248 @@ if (message) {
         });
     });
 
-    // Zustandsänderung behandeln
-    function handleConditionChange(selectElement, bboxId) {
-        let reusableInput = document.getElementById("reusable_" + bboxId);
-        const isDamaged = ["MDF-Platzer", "Rohr_Kratzer", "Delle"].includes(selectElement.value);
-        reusableInput.value = isDamaged ? "false" : "true";
+    // ---------------------------------------------------------------
+    // Manuelle Korrektur der KI-Ergebnisse
+    //
+    // Alle Felder sind Auswahllisten. Der Server prüft jeden Wert erneut gegen
+    // dieselben Listen, damit kein freier Text (und damit kein HTML/JS und kein
+    // schemafremder Wert) in die Datenbank gelangen kann.
+    // ---------------------------------------------------------------
+    const LAENGEN_OPTIONEN = {{ laengen_optionen | tojson }};
+    const GEWICHT_MAP = {{ gewicht_map | tojson }};
+    const TYP_MAP = {{ typ_map | tojson }};
+    const BESCHAEDIGTE_ZUSTAENDE = {{ beschaedigte_zustaende | tojson }};
+    const FARB_OPTIONEN = {{ farb_optionen | tojson }};
+    const FLAECHEN_OPTIONEN = {{ flaechen_optionen | tojson }};
+
+    function findeZelle(element) {
+        return element.closest('.correction-cell');
     }
 
-    // Zustand aktualisieren
-    function updateCondition(event, form) {
-        event.preventDefault();
-
-        const formData = new FormData(form);
-        const dropdown = form.querySelector("select[name='zustand']");
-        const selectedCondition = dropdown.value;
-        const isDamaged = ["MDF-Platzer", "Rohr_Kratzer", "Delle"].includes(selectedCondition);
-
-        // Den versteckten reusable-Wert aktualisieren
-        let reusableInput = form.querySelector("input[name='reusable']");
-        reusableInput.value = isDamaged ? "false" : "true";
-        formData.set("reusable", reusableInput.value);
-
-        fetch("/update_condition/", {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Zustandstext aktualisieren
-                const propertyItem = form.closest("li");
-                const statusDisplay = propertyItem.querySelector("div");
-                statusDisplay.innerHTML = selectedCondition;
-
-                // Badge hinzufügen/aktualisieren
-                if (isDamaged) {
-                    statusDisplay.innerHTML += ' <span class="condition-badge condition-damaged">Beschädigt</span>';
-                } else {
-                    statusDisplay.innerHTML += ' <span class="condition-badge condition-good">Wiederverwendbar</span>';
-                }
-
-                // Erfolgsmeldung
-                const notification = document.createElement('div');
-                notification.style.position = 'fixed';
-                notification.style.bottom = '20px';
-                notification.style.right = '20px';
-                notification.style.background = '#4CAF50';
-                notification.style.color = 'white';
-                notification.style.padding = '12px 20px';
-                notification.style.borderRadius = '4px';
-                notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-                notification.style.zIndex = '1000';
-                notification.innerHTML = '<i class="fas fa-check-circle" style="margin-right: 8px;"></i> Beschädigung erfolgreich gemeldet!';
-
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.style.opacity = '0';
-                    notification.style.transition = 'opacity 0.5s';
-                    setTimeout(() => {
-                        document.body.removeChild(notification);
-                    }, 500);
-                }, 3000);
-            } else {
-                alert("Fehler beim Aktualisieren des Zustands.");
-            }
-        })
-        .catch(error => {
-            console.error("Fehler:", error);
-            alert("Ein Fehler ist aufgetreten bei der Kommunikation mit dem Server.");
+    // Eine Auswahlliste mit Systemmaßen füllen.
+    function fuelleMassSelect(select, optionen, wunschwert) {
+        select.innerHTML = '';
+        const leer = document.createElement('option');
+        leer.value = '';
+        leer.textContent = '– keine Angabe –';
+        select.appendChild(leer);
+        optionen.forEach(wert => {
+            const opt = document.createElement('option');
+            opt.value = wert;
+            opt.textContent = wert;
+            if (String(wert) === String(wunschwert)) opt.selected = true;
+            select.appendChild(opt);
         });
     }
+
+    // Maßfelder passend zum gewählten Bauteil aufbauen.
+    //
+    // Eine Strebe hat genau eine Länge, eine Fläche (Tür, Verkleidung, Boden)
+    // zwei Systemmaße - und je nach Ebene sind das andere Raster.
+    function fuelleMasse(form, breiteWunsch, laengeWunsch) {
+        const bauteil = form.querySelector('select[name="bauteil"]').value;
+        const breiteSelect = form.querySelector('select[name="breite"]');
+        const laengeSelect = form.querySelector('select[name="laenge"]');
+        const breiteFeld = breiteSelect.closest('.breite-field');
+        const laengeFeld = laengeSelect.closest('.laenge-field');
+        const flaeche = FLAECHEN_OPTIONEN[bauteil];
+
+        if (flaeche) {
+            breiteFeld.hidden = false;
+            laengeFeld.hidden = false;
+            breiteFeld.querySelector('.breite-label').textContent = flaeche.breite_label + ' (mm)';
+            laengeFeld.querySelector('.laenge-label').textContent = flaeche.laenge_label + ' (mm)';
+            fuelleMassSelect(breiteSelect, flaeche.breite, breiteWunsch);
+            fuelleMassSelect(laengeSelect, flaeche.laenge, laengeWunsch);
+            return;
+        }
+
+        // Streben: nur die Länge, die Breite ist immer der Rohrdurchmesser.
+        breiteFeld.hidden = true;
+        breiteSelect.innerHTML = '';
+        const optionen = LAENGEN_OPTIONEN[bauteil] || [];
+        if (optionen.length === 0) {
+            // Bauteile ganz ohne Systemmaß (z.B. Schraube, Rolle).
+            laengeFeld.hidden = true;
+            laengeSelect.innerHTML = '';
+            return;
+        }
+        laengeFeld.hidden = false;
+        laengeFeld.querySelector('.laenge-label').textContent = 'Länge (mm)';
+        fuelleMassSelect(laengeSelect, optionen, laengeWunsch);
+    }
+
+    function onBauteilChange(select) {
+        const form = select.closest('form');
+        // Maße des bisherigen Bauteils möglichst beibehalten.
+        const bisherBreite = form.querySelector('select[name="breite"]').value;
+        const bisherLaenge = form.querySelector('select[name="laenge"]').value;
+        fuelleMasse(form, bisherBreite, bisherLaenge);
+
+        // Gewicht und Typ hängen am Bauteil und werden nicht eingegeben.
+        const zelle = findeZelle(form);
+        const karte = zelle.closest('.class-card');
+        const bauteil = select.value;
+        setzeEigenschaft(karte, 'Gewicht', GEWICHT_MAP[bauteil] || 'Nicht verfügbar');
+        setzeEigenschaft(karte, 'Typ', TYP_MAP[bauteil] || 'Unbekannt');
+    }
+
+    // Die Farbkachel neu aufbauen - dort stehen Farbfeld, Name und die Codes,
+    // reiner Text würde das Farbfeld zerstören.
+    function setzeFarbe(karte, name, daten) {
+        const li = findeEigenschaftsZelle(karte, 'Farbe');
+        if (!li || !daten) return;
+
+        li.querySelectorAll('.color-info, div').forEach(el => {
+            if (!el.classList.contains('property-label')) el.remove();
+        });
+
+        const box = document.createElement('div');
+        box.className = 'color-info';
+
+        const probe = document.createElement('span');
+        probe.className = 'color-sample';
+        probe.style.backgroundColor = daten.hex_code || '#CCCCCC';
+
+        const bezeichnung = document.createElement('span');
+        bezeichnung.className = 'color-name';
+        bezeichnung.textContent = name;
+
+        const details = document.createElement('div');
+        details.className = 'color-details';
+        const hex = document.createElement('div');
+        hex.textContent = 'HEX: ' + (daten.hex_code || '-');
+        const ncs = document.createElement('div');
+        ncs.textContent = 'NCS: ' + (daten.ncs_code || '-');
+        details.appendChild(hex);
+        details.appendChild(ncs);
+
+        box.appendChild(probe);
+        box.appendChild(bezeichnung);
+        box.appendChild(details);
+        li.appendChild(box);
+    }
+
+    // Die Zelle der Eigenschaftsliste zu einem Label finden.
+    function findeEigenschaftsZelle(karte, label) {
+        let treffer = null;
+        karte.querySelectorAll('.property-list > li').forEach(li => {
+            const bezeichnung = li.querySelector('.property-label');
+            if (bezeichnung && bezeichnung.textContent.trim() === label) treffer = li;
+        });
+        return treffer;
+    }
+
+    // Einen Wert in der Eigenschaftsliste der Karte setzen (per Label gefunden).
+    function setzeEigenschaft(karte, label, wert) {
+        karte.querySelectorAll('.property-list > li').forEach(li => {
+            const bezeichnung = li.querySelector('.property-label');
+            if (bezeichnung && bezeichnung.textContent.trim() === label) {
+                const ziel = li.querySelector('div');
+                if (ziel) ziel.textContent = wert;
+            }
+        });
+    }
+
+    // Die Wiederverwendbarkeit ist nur bei einem Schaden eine Entscheidung.
+    function onZustandChange(select) {
+        const form = select.closest('form');
+        const beschaedigt = BESCHAEDIGTE_ZUSTAENDE.includes(select.value);
+        const checkbox = form.querySelector('.reuse-check');
+        const hinweis = form.querySelector('.reuse-hint');
+        checkbox.hidden = !beschaedigt;
+        hinweis.hidden = beschaedigt;
+        if (!beschaedigt) {
+            checkbox.querySelector('input').checked = true;
+        }
+    }
+
+    function toggleCorrection(schalter) {
+        const zelle = findeZelle(schalter);
+        const form = zelle.querySelector('.correction-form');
+        const kiAnzeige = zelle.querySelector('.ki-result');
+
+        form.hidden = !schalter.checked;
+        kiAnzeige.hidden = schalter.checked;
+
+        if (schalter.checked) {
+            fuelleMasse(form,
+                form.querySelector('select[name="breite"]').dataset.current,
+                form.querySelector('select[name="laenge"]').dataset.current);
+            onZustandChange(form.querySelector('select[name="zustand"]'));
+        }
+        fitCardHeight(zelle.closest('.class-content'));
+    }
+
+    function saveCorrection(event, form) {
+        event.preventDefault();
+
+        const status = form.querySelector('.correction-status');
+        const zustand = form.querySelector('select[name="zustand"]').value;
+        const beschaedigt = BESCHAEDIGTE_ZUSTAENDE.includes(zustand);
+        const reuseInput = form.querySelector('.reuse-check input');
+
+        const daten = new FormData();
+        daten.append('filename', form.querySelector('input[name="filename"]').value);
+        daten.append('bbox_id', form.querySelector('input[name="bbox_id"]').value);
+        daten.append('bauteil', form.querySelector('select[name="bauteil"]').value);
+        daten.append('zustand', zustand);
+        daten.append('laenge', form.querySelector('select[name="laenge"]').value || '');
+        daten.append('breite', form.querySelector('select[name="breite"]').value || '');
+        daten.append('farbe', form.querySelector('select[name="farbe"]').value || '');
+        // Gute Bauteile sind immer wiederverwendbar.
+        daten.append('reusable', (!beschaedigt || reuseInput.checked).toString());
+
+        status.textContent = 'Speichern …';
+        status.className = 'correction-status';
+
+        fetch('/update_component/', { method: 'POST', body: daten })
+            .then(r => r.json())
+            .then(ergebnis => {
+                if (!ergebnis.success) {
+                    status.textContent = ergebnis.message || 'Korrektur abgelehnt.';
+                    status.className = 'correction-status is-error';
+                    return;
+                }
+
+                const zelle = findeZelle(form);
+                const karte = zelle.closest('.class-card');
+
+                // Kopfzeile, Zustand und Badge auf die Korrektur setzen.
+                const titel = karte.querySelector('.class-header span');
+                if (titel) titel.textContent = ergebnis.bauteil;
+
+                zelle.querySelector('.zustand-text').textContent = zustand;
+                const badge = zelle.querySelector('.reuse-badge');
+                badge.textContent = ergebnis.reusable ? 'Wiederverwendbar' : 'Nicht wiederverwendbar';
+                badge.className = 'reuse-badge condition-badge ' +
+                    (ergebnis.reusable ? 'condition-good' : 'condition-damaged');
+
+                setzeEigenschaft(karte, 'Gewicht', ergebnis.gewicht);
+                setzeEigenschaft(karte, 'Typ', ergebnis.typ);
+
+                if (ergebnis.breite && ergebnis.laenge) {
+                    setzeEigenschaft(karte, 'Maße', ergebnis.breite + ' x ' + ergebnis.laenge + ' mm');
+                }
+
+                // Farbe in der Kachel mitziehen, wenn sie geändert wurde.
+                const farbe = form.querySelector('select[name="farbe"]').value;
+                if (farbe && ergebnis.farbe) setzeFarbe(karte, farbe, ergebnis.farbe);
+
+                // Karte als manuell geprüft markieren.
+                karte.classList.add('is-corrected');
+
+                status.textContent = 'Übernommen';
+                status.className = 'correction-status is-ok';
+                fitCardHeight(zelle.closest('.class-content'));
+            })
+            .catch(fehler => {
+                console.error('Fehler:', fehler);
+                status.textContent = 'Serverfehler.';
+                status.className = 'correction-status is-error';
+            });
+    }
+
 
     // Bildergebnisse aktualisieren bevor gesendet wird
     function updateImageResults() {
@@ -876,15 +1490,55 @@ if (message) {
             }
 
             imageContainer.querySelectorAll(".class-card").forEach(card => {
-                let bboxId = card.querySelector("input[name='bbox_id']").value;
-                let dropdown = card.querySelector("select[name='zustand']");
-                let selectedCondition = dropdown.value;
+                const form = card.querySelector(".correction-form");
+                if (!form) return;
 
-                // Bestehende Objekt finden und aktualisieren
-                let obj = existingResults[filename].find(item => item.bbox_id == bboxId);
-                if (obj) {
-                    obj.zustand = selectedCondition;
-                    obj.reusable = dropdown.value === "unbeschädigt";
+                const bboxId = form.querySelector("input[name='bbox_id']").value;
+                const obj = existingResults[filename].find(item => item.bbox_id == bboxId);
+                if (!obj) return;
+
+                // Nur übernehmen, was tatsächlich manuell korrigiert wurde -
+                // sonst bleiben die KI-Werte unverändert bestehen.
+                if (!card.classList.contains("is-corrected")) return;
+
+                const bauteil = form.querySelector("select[name='bauteil']").value;
+                const zustand = form.querySelector("select[name='zustand']").value;
+                const laenge = form.querySelector("select[name='laenge']").value;
+                const breite = form.querySelector("select[name='breite']").value;
+                const farbe = form.querySelector("select[name='farbe']").value;
+                const istFlaeche = !!FLAECHEN_OPTIONEN[bauteil];
+                const beschaedigt = BESCHAEDIGTE_ZUSTAENDE.includes(zustand);
+                const reuseInput = form.querySelector(".reuse-check input");
+
+                // Nur Streben tragen ihre Länge im Namen.
+                obj.class = (laenge && !istFlaeche) ? bauteil + " " + laenge : bauteil;
+                obj.zustand = zustand;
+                obj.reusable = !beschaedigt || reuseInput.checked;
+                obj.gewicht = GEWICHT_MAP[bauteil] || "Nicht verfügbar";
+                obj.typ = TYP_MAP[bauteil] || "Unbekannt";
+
+                if (istFlaeche) {
+                    // Flächen haben zwei Systemmaße (z.B. Breite x Höhe).
+                    obj.breite = breite ? parseInt(breite, 10) : null;
+                    obj.laenge = laenge ? parseInt(laenge, 10) : null;
+                    obj["maße"] = (breite && laenge) ? breite + " x " + laenge + " mm" : null;
+                } else if (laenge) {
+                    obj.laenge = parseInt(laenge, 10);
+                    obj.breite = 20;
+                    obj["maße"] = "20 x " + laenge + " mm";
+                } else if (!(LAENGEN_OPTIONEN[bauteil] || []).length) {
+                    // Bauteil ohne Systemmaß: altes Maß darf nicht stehen bleiben.
+                    obj.laenge = null;
+                    obj.breite = null;
+                    obj["maße"] = null;
+                }
+                if (farbe && FARB_OPTIONEN[farbe]) {
+                    obj.farbe = {
+                        erkannte_farbe: farbe,
+                        hex_code: FARB_OPTIONEN[farbe].hex_code || "#CCCCCC",
+                        ncs_code: FARB_OPTIONEN[farbe].ncs_code || "N/A",
+                        confidence: 1.0
+                    };
                 }
             });
         });
@@ -1199,7 +1853,7 @@ kiDetectConditionBtn.addEventListener('click', async function() {
                 // Aktualisiere das Dropdown und den angezeigten Zustand in der entsprechenden Objektkarte
                 const targetFilename = document.getElementById('ki-filename').value;
                 const targetBboxId = kiPartIdHidden.value;
-                document.querySelectorAll('.condition-form').forEach(form => {
+                document.querySelectorAll('.correction-form').forEach(form => {
                     const formFilename = form.querySelector('input[name="filename"]').value;
                     const formBboxId = form.querySelector('input[name="bbox_id"]').value;
                     if (formFilename === targetFilename && formBboxId === targetBboxId) {

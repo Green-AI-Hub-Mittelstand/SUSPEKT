@@ -7,10 +7,11 @@ services:
       - path: .env
         required: false
     environment:
-      # Service-to-service: the webapp container reaches Label Studio via the
-      # compose network, the browser link keeps using the host port.
+      # Service-to-service: the webapp container reaches Label Studio directly
+      # via the compose network (no /labelstudio prefix — that prefix is only
+      # for URLs generated for the browser, via LABEL_STUDIO_HOST below).
       - LABEL_STUDIO_API_URL=http://labelstudio:8080/api/projects/{id}/export?exportType=JSON
-      - LABEL_STUDIO_BASE_URL=http://localhost:8082
+      - LABEL_STUDIO_BASE_URL=https://dfki-3129.dfki.de/labelstudio
       - LABEL_STUDIO_MEDIA_DIR=/label-studio-media/upload
       # Default (fallback) model for detection/prelabeling/export. The active
       # version is set on the /training page (drag & drop upload) and stored in
@@ -26,6 +27,9 @@ services:
       - neo4j
     volumes:
       - ./labelstudio-data/media:/label-studio-media:ro
+      # Kundenaufnahmen samt Labels als Trainingsmaterial. Liegt neben den
+      # uebrigen Label-Studio-Daten und ueberlebt damit einen Rebuild.
+      - ./labelstudio-data/saved_customer_files:/app/labelstudio-data/saved_customer_files
       # Shared with the labelstudio service (same path there) so the setup
       # assistant can create per-project subfolders and read synced images.
       - ./training_captures:/label-studio/files
@@ -54,10 +58,23 @@ services:
       - "8082:8080"
     volumes:
       - ./labelstudio-data:/label-studio/data
-      - ./training_captures:/label-studio/files:ro
+      # Nicht read-only: Docker muss hier den Einhaengepunkt fuer den
+      # verschachtelten kundenbilder-Mount anlegen koennen.
+      - ./training_captures:/label-studio/files
+      # Kundenaufnahmen liegen nur einmal (in saved_customer_files/images) und
+      # werden hier zusaetzlich in den Dateiwurzel-Baum von Label Studio
+      # eingehaengt - so entsteht keine zweite Kopie.
+      - ./labelstudio-data/saved_customer_files/images:/label-studio/files/kundenbilder:ro
     environment:
       - LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
       - LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT=/label-studio/files
+      # Served behind nginx under /labelstudio (dfki-3129 only exposes 80/443
+      # externally); this makes Label Studio generate all URLs with that
+      # prefix instead of assuming it owns the domain root.
+      - LABEL_STUDIO_HOST=https://dfki-3129.dfki.de/labelstudio
+      # Django can't tell the proxied request was HTTPS, so its CSRF Origin
+      # check (which assumes http) fails without this explicit allowlist.
+      - CSRF_TRUSTED_ORIGINS=https://dfki-3129.dfki.de
     restart: always
 
   nginx:

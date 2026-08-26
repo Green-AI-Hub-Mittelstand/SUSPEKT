@@ -17,7 +17,7 @@ from .config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, HERE_API_KEY
 
 # Router-Setup
 router = APIRouter(prefix="/resource")
-templates = Jinja2Templates(directory="templates")
+from .templating import templates
 
 # Konstanten für Emissionsberechnungen
 EMISSIONS_FACTORS = {
@@ -33,6 +33,11 @@ FUEL_CONSUMPTION = {
 }
 
 
+# ACHTUNG - Modellannahme, keine Messung.
+# Es liegen keine Daten darüber vor, womit ein Auftrag tatsächlich transportiert
+# wurde. Diese Verteilung wird auf jede Strecke gleich angewendet. Sobald das
+# Transportmittel je Auftrag erfasst wird, gehört es hier heraus und aus den
+# Auftragsdaten hinein.
 TRANSPORT_VERTEILUNG = {
     "lkw": 60,  # 60% der Transportstrecke mit LKW
     "pkw": 30,  # 30% mit PKW
@@ -40,8 +45,9 @@ TRANSPORT_VERTEILUNG = {
     "flugzeug": 2  # 2% mit Flugzeug
 }
 
-
-# Angenommene Einsparung durch optimierte Logistik
+# ACHTUNG - Modellannahme, keine Messung.
+# Die ausgewiesene "Einsparung" ist schlicht dieser Anteil der berechneten
+# Emissionen. Sie beruht auf keiner Vergleichsrechnung.
 EINSPARUNG_PROZENT = 20
 
 # Standardwerte für Berlin als Ausgangspunkt
@@ -152,11 +158,18 @@ def get_transport_emissions() -> Dict[str, Any]:
         for transport, prozent in TRANSPORT_VERTEILUNG.items()
     }
 
-    # Emissionen berechnen
+    # Der Schiffsfaktor gilt je Tonne Ladung. Die tatsächlich erfasste Masse
+    # ist bekannt - eine pauschale 10-Tonnen-Annahme überschätzte den Wert um
+    # mehr als das Vierzigfache.
+    try:
+        ladung_t = max(analyze_reusable_components().get("total_weight_kg", 0) / 1000, 0.001)
+    except Exception:
+        ladung_t = 0.001
+
     emissions = {
         "lkw": calculate_emissions(distanzen["lkw"], FUEL_CONSUMPTION["lkw"], EMISSIONS_FACTORS["diesel"]),
         "pkw": calculate_emissions(distanzen["pkw"], FUEL_CONSUMPTION["pkw"], EMISSIONS_FACTORS["benzin"]),
-        "schiff": distanzen["schiff"] * EMISSIONS_FACTORS["schiff"] * 10,  # Annahme: 10 Tonnen durchschnittliche Ladung
+        "schiff": distanzen["schiff"] * EMISSIONS_FACTORS["schiff"] * ladung_t,
         "flugzeug": distanzen["flugzeug"] * EMISSIONS_FACTORS["flugzeug"]
     }
 
@@ -167,12 +180,10 @@ def get_transport_emissions() -> Dict[str, Any]:
     }
     gesamt_einsparung = sum(einsparungen.values())
 
-    # Originale Werte beibehalten
-    total_emissions = calculate_emissions(
-        distances["total_distance"],
-        FUEL_CONSUMPTION["lkw"],
-        EMISSIONS_FACTORS["diesel"]
-    )
+    # Die Gesamtemission ist die Summe der Transportmittel. Vorher wurde hier
+    # die ganze Strecke noch einmal als reiner LKW-Transport gerechnet - das
+    # ergab auf derselben Seite zwei verschiedene Werte für dieselbe Sache.
+    total_emissions = sum(emissions.values())
 
     online_emissions = calculate_emissions(
         distances["online_distance"],
@@ -204,7 +215,16 @@ def get_transport_emissions() -> Dict[str, Any]:
                 "einsparung_kg": einsparungen[transport]
             } for transport in TRANSPORT_VERTEILUNG.keys()
         },
-        "gesamt_einsparung_kg": gesamt_einsparung
+        "gesamt_einsparung_kg": gesamt_einsparung,
+
+        # Für die Kennzeichnung in der Oberfläche: was Messung ist und was
+        # Annahme, soll auf der Seite unterscheidbar sein.
+        "annahmen": {
+            "verteilung": TRANSPORT_VERTEILUNG,
+            "einsparung_prozent": EINSPARUNG_PROZENT,
+            "ladung_t": round(ladung_t, 3),
+            "verbrauch": FUEL_CONSUMPTION,
+        }
     }
 
 
@@ -250,6 +270,29 @@ async def resource_efficiency_dashboard(request: Request):
         emissions_data = get_transport_emissions()
         orders = await get_orders()
 
+        # Netto-Bilanz der Kreislaufnutzung.
+        #
+        # "Vor Ort" heißt: eine Mitarbeiterin ist zum Möbel gefahren - diese
+        # Fahrt hat stattgefunden und kostet Emissionen. "Online" heißt: die
+        # Kundschaft hat die Erfassung selbst per App gemacht - die Anfahrt ist
+        # dadurch entfallen und zählt als Einsparung.
+        vermieden_produktion = re_data.get("co2_savings_production", 0) or 0
+        vermieden_anfahrt = emissions_data.get("online_emissions_kg", 0) or 0
+        gefahren = emissions_data.get("vor_ort_emissions_kg", 0) or 0
+        netto = vermieden_produktion + vermieden_anfahrt - gefahren
+
+        groesser = max(vermieden_produktion, vermieden_anfahrt, gefahren, 1)
+        bilanz = {
+            "vermieden_produktion_kg": round(vermieden_produktion, 1),
+            "vermieden_anfahrt_kg": round(vermieden_anfahrt, 1),
+            "gefahren_kg": round(gefahren, 1),
+            "netto_kg": round(netto, 1),
+            "positiv": netto >= 0,
+            "anteil_produktion": round(vermieden_produktion / groesser * 100, 1),
+            "anteil_anfahrt": round(vermieden_anfahrt / groesser * 100, 1),
+            "anteil_gefahren": round(gefahren / groesser * 100, 1),
+        }
+
         # Template mit Daten rendern
         return templates.TemplateResponse("resource_efficiency.html", {
             "request": request,
@@ -257,6 +300,7 @@ async def resource_efficiency_dashboard(request: Request):
             "role": "admin",
             "re_data": re_data,
             "emissions_data": emissions_data,
+            "bilanz": bilanz,
             "orders": orders if orders else []
         })
     except Exception as e:

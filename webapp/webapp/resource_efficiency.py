@@ -18,6 +18,7 @@ EMISSIONS_FACTOR_STEEL = 7.0  # Edelstahl
 EMISSIONS_FACTOR_MDF = 0.6    # MDF-Platten
 TRANSPORT_EMISSIONS_FACTOR = 0.14  # kg CO₂ pro km (PKW)
 DENSITY_STEEL = 7850  # kg/m³
+TUBE_DIAMETER_M = 0.02  # Systemrohr 20 mm
 
 
 class OrderAnalysis(BaseModel):
@@ -26,17 +27,29 @@ class OrderAnalysis(BaseModel):
 
 
 def fetch_reusable_components():
-    """ Holt alle Komponenten mit reuseable=true aus Neo4j """
+    """Holt die freigegebenen Bauteile mit ihrer Menge aus Neo4j.
+
+    Zwei Datenformate liegen nebeneinander vor:
+
+    * Sammelpositionen der Stückliste tragen ``anzahl`` und
+      ``anzahl_wiederverwendbar`` - eine Zeile steht für mehrere Bauteile.
+    * Ältere Einzelknoten haben diese Felder nicht; dort entscheidet
+      ``reusable`` über das eine Bauteil.
+
+    Nur freigegebene Aufträge zählen, damit die Auswertung zum digitalen Lager
+    passt. ``:Erkennung``-Knoten sind ein eigenes Label und damit ohnehin außen
+    vor - sie würden dasselbe Bauteil aus mehreren Ansichten doppelt zählen.
+    """
     query = """
     MATCH (c:Component)
-    WHERE c.reusable = true
-    RETURN c.class AS component_class, c.laenge AS length, 
-           c.typ AS typ, c.zustand AS status, c.farbe AS color
+    WHERE c.confirmed = true
+    RETURN c.class AS component_class, c.laenge AS length,
+           c.typ AS typ, c.zustand AS status, c.farbe AS color,
+           coalesce(c.anzahl, 1) AS anzahl,
+           c.anzahl_wiederverwendbar AS anzahl_wiederverwendbar,
+           c.reusable AS reusable
     """
-    result = db.run_query(query)
-
-
-    return result
+    return db.run_query(query)
 
 
 
@@ -65,68 +78,76 @@ def fetch_relevant_components():
         return [record for record in result]
 
 
+def _zahl(wert):
+    """Robust in eine Zahl wandeln - die Felder kommen teils als Text."""
+    try:
+        if wert is None or str(wert).strip().lower() in ("", "none", "nan"):
+            return 0.0
+        return float(wert)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def analyze_reusable_components():
+    """Wertet den freigegebenen Bestand aus.
+
+    Die CO2-Ersparnis ist die Menge, die durch Wiederverwendung nicht neu
+    produziert werden muss: Masse der wiederverwendbaren Teile mal
+    Emissionsfaktor. Eine Rechnung über Längen mal Emissionsfaktor wäre
+    dimensional falsch - der Faktor bezieht sich auf Kilogramm, nicht auf
+    Millimeter.
+    """
     components = fetch_reusable_components()
-    total_length, reusable_length = 0, 0
-    total_weight_saved = 0  # Gesamte Gewichtseinsparung in kg
-    co2_new, co2_reuse = 0, 0
+
+    total_length = reusable_length = 0.0
+    total_weight = total_weight_saved = 0.0
+    stueck_gesamt = stueck_verwendbar = 0
 
     for component in components:
-        # Sicherstellen, dass length existiert und numerisch ist
-        try:
-            length = float(component["length"]) if component["length"] and str(component["length"]).lower() not in ["none", "nan", ""] else 0
-        except ValueError:
-            length = 0
+        menge = int(_zahl(component.get("anzahl")) or 1)
 
-        if length > 0:
-            total_length += length
-        #else:
-        #    print(f"⚠️ Warnung: Ungültige Länge für Komponente {component['component_class']}: {component['length']}")
+        # Sammelpositionen fuehren den verwendbaren Anteil selbst mit,
+        # Einzelknoten entscheiden ueber reusable.
+        verwendbar = component.get("anzahl_wiederverwendbar")
+        if verwendbar is None:
+            verwendbar = menge if component.get("reusable") else 0
+        verwendbar = max(0, min(int(_zahl(verwendbar)), menge))
 
-        # Prüfen, ob `color` vorhanden ist
-        if "color" in component and component["color"]:
-            color = component["color"].lower()
-        else:
-            color = ""
+        stueck_gesamt += menge
+        stueck_verwendbar += verwendbar
 
-        # Prüfen, ob die Komponente Edelstahl ist
-        if "edelstahl" in color:
-            diameter = 0.02  # Meter (20 mm)
-            radius = diameter / 2
+        laenge = _zahl(component.get("length"))
+        if laenge <= 0:
+            continue
+        total_length += laenge * menge
+        reusable_length += laenge * verwendbar
 
-            # Volumen des Edelstahl-Zylinders berechnen
-            volume = math.pi * (radius ** 2) * (length / 1000)  # Länge in Meter umwandeln
-            weight = volume * DENSITY_STEEL  # Masse in kg
+        farbe = str(component.get("color") or "").lower()
+        if "edelstahl" not in farbe:
+            continue
 
-            # Prüfen, ob der `status` unbeschädigt ist
-            if "status" in component and component["status"] == "unbeschädigt":
-                reusable_length += length
-                total_weight_saved += weight  # Gewicht der wiederverwendbaren Teile
-            else:
-                material_factor = EMISSIONS_FACTOR_STEEL
-                co2_new += weight * material_factor  # Neue CO2-Emission
-        #else:
-        #    print(f"⚠️ Warnung: Keine Edelstahl-Farbe erkannt für {component['component_class']}")
+        # Systemrohr 20x1: Masse ueber den Zylinder aus Aussendurchmesser.
+        radius = TUBE_DIAMETER_M / 2
+        masse_je_stueck = math.pi * (radius ** 2) * (laenge / 1000) * DENSITY_STEEL
+        total_weight += masse_je_stueck * menge
+        total_weight_saved += masse_je_stueck * verwendbar
 
-    # CO₂ Einsparung durch Wiederverwendung
-    if total_length > 0:
-        co2_reuse = (total_length - reusable_length) * EMISSIONS_FACTOR_STEEL
-        co2_savings_production = co2_new - co2_reuse
-        material_savings = (reusable_length / total_length) * 100
-    else:
-        co2_savings_production = 0
-        material_savings = 0
-
-    #print(f"📊 Gesamtlänge: {total_length} mm | Wiederverwendbare Länge: {reusable_length} mm")
-    #print(f"📊 Gewichtseinsparung: {total_weight_saved} kg | CO₂ Einsparung: {co2_savings_production} kg")
+    co2_savings_production = total_weight_saved * EMISSIONS_FACTOR_STEEL
+    material_savings = (reusable_length / total_length * 100) if total_length else 0
 
     return {
-        "total_length": total_length,
-        "reusable_length": reusable_length,
-        "material_savings": round(material_savings, 2),
-        "total_weight_saved_kg": round(total_weight_saved, 2),
-        "co2_savings_production": round(co2_savings_production, 2),
-        "components": components
+        "total_length_m": round(total_length / 1000, 2),
+        "reusable_length_m": round(reusable_length / 1000, 2),
+        "material_savings": round(material_savings, 1),
+        "total_weight_kg": round(total_weight, 1),
+        "total_weight_saved_kg": round(total_weight_saved, 1),
+        "co2_savings_production": round(co2_savings_production, 1),
+        "stueck_gesamt": stueck_gesamt,
+        "stueck_verwendbar": stueck_verwendbar,
+        # Rueckwaertskompatibel fuer aeltere Aufrufer/Templates.
+        "total_length": round(total_length, 1),
+        "reusable_length": round(reusable_length, 1),
+        "components": components,
     }
 
 

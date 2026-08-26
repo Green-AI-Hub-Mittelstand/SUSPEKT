@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
 
-{% block extra_css %}{% endblock %}
+{% block extra_css %}
+{% endblock %}
 
-{% block title %}🌍 System 180 – Ressourceneffizienz Dashboard {% endblock %}
+{% block title %}System 180 – Ressourceneffizienz Dashboard{% endblock %}
 
 {% block head %}
 <head>
@@ -16,15 +17,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary-color: #007BFF;
-            --success-color: #43a047;
-            --border-radius: 12px;
-            --card-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            --primary-color: var(--c-black);
+            --success-color: var(--c-success);
+            --border-radius: 4px;
+            --card-shadow: var(--shadow-sm);
         }
 
         .card {
             padding: 20px;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            background: var(--c-gray-50);
             border-radius: var(--border-radius);
             display: flex;
             flex-direction: column;
@@ -49,43 +50,7 @@
         .highlight {
             font-size: 2em;
             font-weight: bold;
-            color: #06283D;
-        }
-
-        .resource-card {
-            padding: 15px 10px;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            border-radius: var(--border-radius);
-            text-align: center;
-            box-shadow: var(--card-shadow);
-            transition: transform 0.3s ease-in-out;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 160px;
-        }
-
-        .resource-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-        }
-
-        .resource-card i {
-            font-size: 28px;
-            color: var(--primary-color);
-            margin-bottom: 8px;
-        }
-
-        .resource-label {
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .resource-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #06283D;
+            color: var(--c-black);
         }
 
         #map {
@@ -94,7 +59,7 @@
             grid-column: span 3;
             margin-top: 30px;
             box-shadow: var(--card-shadow);
-            border: 2px solid #ddd;
+            border: 2px solid var(--c-border);
         }
 
         .title {
@@ -103,7 +68,7 @@
             grid-column: span 3;
             text-transform: uppercase;
             margin: 2rem 0 1.5rem 0;
-            color: #06283D;
+            color: var(--c-black);
             border-bottom: 3px solid var(--primary-color);
             padding-bottom: 0.5rem;
         }
@@ -125,71 +90,11 @@
             justify-content: space-between;
         }
 
-        .chart-box {
-            background-color: white;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-            width: 100%;
-            max-width: 350px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .transport-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin: 20px 0 30px 0;
-        }
-
         .transport-savings {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 15px;
             margin-top: 20px;
-        }
-
-        .transport-card {
-            padding: 15px;
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border-radius: 10px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .transport-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-        }
-
-        .transport-card i {
-            font-size: 30px;
-            color: var(--success-color);
-            margin-bottom: 8px;
-        }
-
-        .transport-title {
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 5px;
-            color: #2e7d32;
-        }
-
-        .transport-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #2e7d32;
-        }
-
-        .transport-subtitle {
-            font-size: 0.9em;
-            color: #555;
         }
 
         .total-savings {
@@ -198,11 +103,224 @@
             background: linear-gradient(135deg, #c8e6c9, #81c784);
         }
 
+        /* Hauptkennzahl und Anteil nebeneinander */
+        .kennzahl-block {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero-zahl, .quote-block, .mini-kachel, .diagramm-block {
+            background: var(--c-white);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .hero-zahl { padding: 1.75rem 2rem; }
+
+        .hero-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--c-gray-500);
+        }
+
+        .hero-wert {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            color: var(--c-accent);
+            margin: 0.4rem 0 0.5rem;
+        }
+
+        .hero-einheit {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--c-gray-600);
+            margin-left: 0.5rem;
+            letter-spacing: 0;
+        }
+
+        .hero-kontext { font-size: 0.88rem; color: var(--c-gray-600); }
+
+        .quote-block { padding: 1.75rem 2rem; display: flex; flex-direction: column; justify-content: center; }
+
+        .quote-kopf {
+            display: flex; align-items: baseline; justify-content: space-between;
+            gap: 1rem; margin-bottom: 0.6rem;
+        }
+
+        .quote-label {
+            font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--c-gray-500);
+        }
+
+        .quote-wert { font-size: 1.9rem; font-weight: 700; color: var(--c-ink); }
+
+        .quote-balken {
+            height: 10px; background: var(--c-gray-100);
+            border-radius: 999px; overflow: hidden;
+        }
+
+        .quote-fuellung { height: 100%; background: var(--c-accent); border-radius: 999px; }
+
+        .quote-fuss { margin-top: 0.6rem; font-size: 0.85rem; color: var(--c-gray-600); }
+
+        /* Nachgeordnete Zahlen */
+        .kennzahl-reihe {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .mini-kachel { padding: 1rem 1.1rem; }
+
+        .mini-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--c-gray-500); margin-bottom: 0.3rem;
+        }
+
+        .mini-wert { font-size: 1.35rem; font-weight: 700; color: var(--c-ink); }
+
+        .mini-kachel.hervorgehoben {
+            border-color: var(--c-accent);
+            background: var(--c-accent-bg);
+        }
+        .mini-kachel.hervorgehoben .mini-wert { color: var(--c-accent); }
+
+        /* Diagramme */
+        .diagramm-block { padding: 1.25rem 1.5rem 1.5rem; margin-bottom: 2rem; }
+
+        .diagramm-kopf {
+            display: flex; flex-wrap: wrap; align-items: baseline;
+            justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem;
+        }
+
+        .diagramm-kopf h3 { margin: 0; font-size: 1.05rem; }
+
+        .diagramm-summe { font-size: 0.85rem; color: var(--c-gray-600); }
+
+        .chart-box { position: relative; height: 200px; }
+        .chart-box.hoch { height: 260px; }
+
+        @media (max-width: 768px) {
+            .kennzahl-block { grid-template-columns: 1fr; }
+            .hero-zahl, .quote-block { padding: 1.25rem 1.25rem; }
+        }
+
+        /* Kreislaufbilanz */
+        .bilanz-block {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .bilanz-zeilen {
+            background: var(--c-white);
+            border: 1px solid var(--c-border);
+            border-radius: var(--radius);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1.1rem;
+        }
+
+        .bilanz-zeile {
+            display: grid;
+            grid-template-columns: minmax(0, 9rem) 1fr auto;
+            align-items: center;
+            gap: 0.9rem;
+        }
+
+        .bilanz-name { font-size: 0.85rem; color: var(--c-gray-600); }
+
+        .bilanz-balken {
+            height: 14px;
+            background: var(--c-gray-100);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bilanz-fuellung { height: 100%; border-radius: 999px; }
+        .bilanz-fuellung.gut { background: var(--c-accent); }
+        .bilanz-fuellung.last { background: var(--c-gray-400); }
+
+        .bilanz-wert { font-weight: 700; white-space: nowrap; font-size: 0.95rem; }
+
+        .bilanz-ergebnis {
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            border: 1px solid var(--c-border);
+            background: var(--c-white);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .bilanz-ergebnis.ist-positiv { border-left: 4px solid var(--c-success); }
+        .bilanz-ergebnis.ist-negativ { border-left: 4px solid #d9a441; }
+
+        .bilanz-ergebnis-label {
+            font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--c-gray-500);
+        }
+
+        .bilanz-ergebnis-wert {
+            font-size: clamp(2rem, 5vw, 2.8rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0.3rem 0 0.5rem;
+        }
+
+        .ist-positiv .bilanz-ergebnis-wert { color: var(--c-success); }
+        .ist-negativ .bilanz-ergebnis-wert { color: #8a5a00; }
+
+        .bilanz-einheit {
+            font-size: 1rem; font-weight: 600; color: var(--c-gray-600);
+            margin-left: 0.5rem; letter-spacing: 0;
+        }
+
+        .bilanz-ergebnis-text { font-size: 0.87rem; color: var(--c-gray-600); line-height: 1.5; }
+
+        /* Noch nicht erhoben - bewusst zurückhaltend, damit es nicht wie ein
+           Messwert aussieht. */
+        .mini-kachel.demnaechst { background: var(--c-gray-50); border-style: dashed; }
+        .mini-kachel.demnaechst .mini-wert { color: var(--c-gray-400); }
+
+        .bald {
+            display: inline-block;
+            margin-left: 0.35rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+            background: var(--c-gray-200);
+            color: var(--c-gray-600);
+            font-size: 0.62rem;
+            letter-spacing: 0.03em;
+        }
+
+        .demnaechst-text {
+            margin-top: 0.4rem;
+            font-size: 0.78rem;
+            color: var(--c-gray-500);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .bilanz-block { grid-template-columns: 1fr; }
+            .bilanz-zeile { grid-template-columns: minmax(0, 7rem) 1fr auto; gap: 0.6rem; }
+        }
+
         .section-header {
             font-size: 1.8rem;
             font-weight: bold;
             margin: 2rem 0 1rem 0;
-            color: #06283D;
+            color: var(--c-black);
         }
 
         .map-container {
@@ -238,10 +356,37 @@
                 flex-direction: column;
             }
 
-            .resource-card {
-                width: 100%;
-                min-height: auto;
-                padding: 15px;
+            .title {
+                font-size: 1.6em;
+            }
+
+            .section-header {
+                font-size: 1.3rem;
+            }
+
+            #map {
+                height: 320px;
+            }
+
+            .chart-container {
+                padding: 12px;
+            }
+
+            .legend {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.3em;
+            }
+
+            .resource-value,
+
+            #map {
+                height: 260px;
             }
         }
     </style>
@@ -249,72 +394,103 @@
 
 {% block content %}
 <div class="container mx-auto p-4">
-    <h2 class="title">🌱 System 180 – Nachhaltigkeit im Fokus</h2>
+    <h2 class="title">System 180 – Nachhaltigkeit im Fokus</h2>
 
     <!-- Ressourceneffizienz Section -->
-    <div class="section-header">📊 Ressourceneffizienz – Analyse wiederverwendbarer Komponenten</div>
+    <div class="section-header">Ressourceneffizienz – Analyse wiederverwendbarer Komponenten</div>
 
-    <!-- Die 5 Ressourceneffizienz-Karten in einer Reihe -->
-    <div class="transport-container">
-        <div class="resource-card">
-            <i class="fas fa-ruler"></i>
-            <div class="resource-label">Gesamtlänge</div>
-            <div class="resource-value">{{ re_data.total_length / 100 | default(0) | round(2) }} m</div>
+    <!-- Kennzahl im Vordergrund statt fünf gleichrangiger Kacheln:
+         die eingesparte CO2-Menge ist die Aussage der Seite. -->
+    <div class="kennzahl-block">
+        <div class="hero-zahl">
+            <div class="hero-label">Vermiedene CO₂-Emissionen durch Wiederverwendung</div>
+            <div class="hero-wert">{{ '%.0f'|format(re_data.co2_savings_production|default(0)) }}<span class="hero-einheit">kg CO₂</span></div>
+            <div class="hero-kontext">
+                aus {{ '%.0f'|format(re_data.total_weight_saved_kg|default(0)) }} kg wiederverwendetem Edelstahl
+                &middot; Faktor 7,0 kg CO₂ je kg
+            </div>
         </div>
 
-        <div class="resource-card">
-            <i class="fas fa-sync-alt"></i>
-            <div class="resource-label">Wiederverwendbare Länge</div>
-            <div class="resource-value">{{ re_data.reusable_length / 100 | default(0) | round(2) }} m</div>
-        </div>
-
-        <div class="resource-card">
-            <i class="fas fa-weight-hanging"></i>
-            <div class="resource-label">Gesparte Masse</div>
-            <div class="resource-value">{{ re_data.total_weight_saved_kg | default(0) | round(2) }} kg</div>
-        </div>
-
-        <div class="resource-card">
-            <i class="fas fa-percentage"></i>
-            <div class="resource-label">Materialeinsparung</div>
-            <div class="resource-value">{{ re_data.material_savings | default(0) }} %</div>
-        </div>
-
-        <div class="resource-card">
-            <i class="fas fa-cloud"></i>
-            <div class="resource-label">CO₂ Einsparung Produktion</div>
-            <div class="resource-value">{{ re_data.co2_savings_production /1000 | default(0) | round(2) }} kg</div>
+        <!-- Anteil am Ganzen: als Balken lesbarer denn als blanke Prozentzahl. -->
+        <div class="quote-block">
+            <div class="quote-kopf">
+                <span class="quote-label">Materialeinsparung</span>
+                <span class="quote-wert">{{ re_data.material_savings|default(0) }} %</span>
+            </div>
+            <div class="quote-balken">
+                <div class="quote-fuellung" style="width: {{ re_data.material_savings|default(0) }}%"></div>
+            </div>
+            <div class="quote-fuss">
+                {{ re_data.stueck_verwendbar|default(0) }} von {{ re_data.stueck_gesamt|default(0) }} Bauteilen wiederverwendbar
+            </div>
         </div>
     </div>
 
-    <!-- Diagramm-Box für CO2-Chart
-    <div class="chart-box">
-        <canvas id="co2Chart"></canvas>
-    </div>-->
+    <!-- Nachgeordnete Zahlen, bewusst kleiner als die Hauptkennzahl. -->
+    <div class="kennzahl-reihe">
+        <div class="mini-kachel">
+            <div class="mini-label">Erfasste Rohrlänge</div>
+            <div class="mini-wert">{{ re_data.total_length_m|default(0) }} m</div>
+        </div>
+        <div class="mini-kachel">
+            <div class="mini-label">Davon wiederverwendbar</div>
+            <div class="mini-wert">{{ re_data.reusable_length_m|default(0) }} m</div>
+        </div>
+        <div class="mini-kachel">
+            <div class="mini-label">Erfasste Masse</div>
+            <div class="mini-wert">{{ re_data.total_weight_kg|default(0) }} kg</div>
+        </div>
+        <div class="mini-kachel">
+            <div class="mini-label">Bauteile insgesamt</div>
+            <div class="mini-wert">{{ re_data.stueck_gesamt|default(0) }}</div>
+        </div>
+    </div>
 
-    <h3 class="title">📍 Transportemissionen im Überblick</h3>
+    <!-- CO2-Einsparung nach Quelle. Die Summe steht als Zahl daneben, nicht
+         als eigene Kategorie - sonst zaehlt sie sich selbst mit. -->
+    <div class="diagramm-block">
+        <div class="diagramm-kopf">
+            <h3>CO₂-Einsparung nach Quelle</h3>
+            <span class="diagramm-summe">
+                Summe {{ '%.0f'|format((re_data.co2_savings_production|default(0)) + (emissions_data.gesamt_einsparung_kg|default(0))) }} kg CO₂
+            </span>
+        </div>
+        <div class="chart-box"><canvas id="co2Chart"></canvas></div>
+    </div>
 
-    <!-- Transport übersicht -->
-    <div class="transport-container">
-        <div class="transport-card">
-            <i class="fas fa-road"></i>
-            <div class="transport-title">Gesamtstrecke</div>
-            <div class="transport-value">{{emissions_data.total_distance_km | round(2)}} km</div>
+    <div class="section-header">Transport</div>
+
+    <!-- Strecke und Emissionen getrennt: verschiedene Einheiten gehoeren nicht
+         in eine Kachelreihe, sonst vergleicht das Auge km mit kg. -->
+    <div class="kennzahl-reihe">
+        <div class="mini-kachel">
+            <div class="mini-label">Strecke gesamt</div>
+            <div class="mini-wert">{{ '%.0f'|format(emissions_data.total_distance_km|default(0)) }} km</div>
         </div>
-        <div class="transport-card">
-            <i class="fas fa-truck"></i>
-            <div class="transport-title">Online-Bestellungen</div>
-            <div class="transport-value">{{emissions_data.online_distance_km | round(2)}} km</div>
+        <div class="mini-kachel">
+            <div class="mini-label">davon Online-Aufträge</div>
+            <div class="mini-wert">{{ '%.0f'|format(emissions_data.online_distance_km|default(0)) }} km</div>
         </div>
-        <div class="transport-card">
-            <i class="fas fa-smog"></i>
-            <div class="transport-title">CO₂-Emissionen Gesamt</div>
-            <div class="transport-value"> {{emissions_data.total_emissions_kg | round(2)}}  kg</div>
+        <div class="mini-kachel">
+            <div class="mini-label">davon vor Ort</div>
+            <div class="mini-wert">{{ '%.0f'|format(emissions_data.vor_ort_distance_km|default(0)) }} km</div>
         </div>
-        <div class="transport-card">
-            <i class="fas fa-box"></i>
-            <div class="transport-title">CO₂-Emissionen Online</div>
-            <div class="transport-value">{{emissions_data.online_emissions_kg | round(2) }} kg</div>
+        <div class="mini-kachel hervorgehoben">
+            <div class="mini-label">Emissionen gesamt</div>
+            <div class="mini-wert">{{ '%.0f'|format(emissions_data.total_emissions_kg|default(0)) }} kg CO₂</div>
+        </div>
+    </div>
+
+    <div class="kennzahl-reihe">
+        <div class="mini-kachel">
+            <div class="mini-label">Anfahrten vor Ort</div>
+            <div class="mini-wert">{{ '%.0f'|format(emissions_data.vor_ort_emissions_kg|default(0)) }} kg CO₂</div>
+            <div class="demnaechst-text">Tatsächlich gefahren, um Bestände aufzunehmen.</div>
+        </div>
+        <div class="mini-kachel hervorgehoben">
+            <div class="mini-label">Vermiedene Anfahrten</div>
+            <div class="mini-wert">{{ '%.0f'|format(emissions_data.online_emissions_kg|default(0)) }} kg CO₂</div>
+            <div class="demnaechst-text">Kundschaft hat selbst per App erfasst – die Fahrt entfiel.</div>
         </div>
     </div>
 
@@ -338,40 +514,77 @@
     </div>
 
     <!-- Neue Sektion für Transportemissionen pro Transportmittel -->
-    <h3 class="title mt-8">🚛 CO₂-Einsparungen nach Transportmittel</h3>
-        <div class="transport-container">
-        <div class="transport-card">
-            <i class="fas fa-truck-moving"></i>
-            <div class="transport-title">LKW-Transport</div>
-            <div class="transport-value">{{ emissions_data.transportmittel.lkw.einsparung_kg | round(2) }} kg CO₂</div>
-            <div class="transport-subtitle">Strecke: {{ emissions_data.transportmittel.lkw.distanz_km | round(2) }} km</div>
+    <!-- Vier Werte im Vergleich: als Balken auf einer gemeinsamen Achse
+         ablesbar, als vier Kacheln nur nebeneinandergestellt. -->
+    <div class="diagramm-block">
+        <div class="diagramm-kopf">
+            <h3>CO₂-Einsparung nach Transportmittel</h3>
+            <span class="diagramm-summe">Strecke jeweils in der Beschriftung</span>
         </div>
-        <div class="transport-card">
-            <i class="fas fa-car"></i>
-            <div class="transport-title">PKW-Transport</div>
-            <div class="transport-value">{{ emissions_data.transportmittel.pkw.einsparung_kg | round(2) }} kg CO₂</div>
-            <div class="transport-subtitle">Strecke: {{ emissions_data.transportmittel.pkw.distanz_km | round(2) }} km</div>
+        <div class="chart-box hoch"><canvas id="transportChart"></canvas></div>
+    </div>
+
+    <div class="section-header">Kreislaufbilanz</div>
+
+    <!-- Gegenueberstellung statt Einzelwert: eine Einsparung ist nur dann
+         eine, wenn sie den Transport uebersteigt, den sie verursacht. -->
+    <div class="bilanz-block">
+        <div class="bilanz-zeilen">
+            <div class="bilanz-zeile">
+                <div class="bilanz-name">Vermiedene Produktion</div>
+                <div class="bilanz-balken">
+                    <div class="bilanz-fuellung gut" style="width: {{ bilanz.anteil_produktion }}%"></div>
+                </div>
+                <div class="bilanz-wert">+{{ '%.0f'|format(bilanz.vermieden_produktion_kg) }} kg</div>
+            </div>
+            <div class="bilanz-zeile">
+                <div class="bilanz-name">Vermiedene Anfahrten</div>
+                <div class="bilanz-balken">
+                    <div class="bilanz-fuellung gut" style="width: {{ bilanz.anteil_anfahrt }}%"></div>
+                </div>
+                <div class="bilanz-wert">+{{ '%.0f'|format(bilanz.vermieden_anfahrt_kg) }} kg</div>
+            </div>
+            <div class="bilanz-zeile">
+                <div class="bilanz-name">Gefahrene Anfahrten</div>
+                <div class="bilanz-balken">
+                    <div class="bilanz-fuellung last" style="width: {{ bilanz.anteil_gefahren }}%"></div>
+                </div>
+                <div class="bilanz-wert">−{{ '%.0f'|format(bilanz.gefahren_kg) }} kg</div>
+            </div>
         </div>
-        <div class="transport-card">
-            <i class="fas fa-ship"></i>
-            <div class="transport-title">Schiffstransport</div>
-            <div class="transport-value">{{ emissions_data.transportmittel.schiff.einsparung_kg | round(2) }} kg CO₂</div>
-            <div class="transport-subtitle">Strecke: {{ emissions_data.transportmittel.schiff.distanz_km | round(2) }} km</div>
-        </div>
-        <div class="transport-card">
- <i class="fas fa-plane"></i>
-            <div class="transport-title">Flugtransport</div>
-            <div class="transport-value">{{ emissions_data.transportmittel.flugzeug.einsparung_kg | round(2) }} kg CO₂</div>
-            <div class="transport-subtitle">Strecke: {{ emissions_data.transportmittel.flugzeug.distanz_km | round(2) }} km</div>
+
+        <div class="bilanz-ergebnis {{ 'ist-positiv' if bilanz.positiv else 'ist-negativ' }}">
+            <div class="bilanz-ergebnis-label">Netto-CO₂-Bilanz</div>
+            <div class="bilanz-ergebnis-wert">
+                {{ '%+.0f'|format(bilanz.netto_kg) }}<span class="bilanz-einheit">kg CO₂</span>
+            </div>
+            <div class="bilanz-ergebnis-text">
+                {% if bilanz.positiv %}
+                    Wiederverwendung und die per App entfallenen Anfahrten sparen mehr ein,
+                    als die tatsächlich gefahrenen Termine verursachen.
+                {% else %}
+                    Die gefahrenen Anfahrten überwiegen derzeit. Mehr Erfassungen per App
+                    statt Vor-Ort-Terminen drehen die Bilanz.
+                {% endif %}
+            </div>
         </div>
     </div>
 
-
-    <!-- Transportemissions-Chart -->
-    <div class="chart-container mt-8">
-        <canvas id="transportChart"></canvas>
+    <!-- Noch nicht erhoben: beide brauchen Daten, die erst über mehrere
+         Nutzungszyklen entstehen. -->
+    <div class="kennzahl-reihe">
+        <div class="mini-kachel demnaechst">
+            <div class="mini-label">Kreislaufquote <span class="bald">in Arbeit</span></div>
+            <div class="mini-wert">—</div>
+            <div class="demnaechst-text">Anteil der Bauteile, die zurück ins Lager gehen, statt entsorgt zu werden.</div>
+        </div>
+        <div class="mini-kachel demnaechst">
+            <div class="mini-label">Wiederverwendungszähler <span class="bald">in Arbeit</span></div>
+            <div class="mini-wert">—</div>
+            <div class="demnaechst-text">Wie oft ein Bauteil bereits im Kreislauf war – je Bauteil und im Mittel.</div>
+        </div>
     </div>
-</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -435,109 +648,120 @@
         console.error("Orders-Daten sind nicht in einem Array-Format:", orders);
     }
 
-    // CO2 Chart für Ressourceneffizienz
-    document.addEventListener('DOMContentLoaded', function() {
-        // CO2 Chart initialisieren
-        var ctxCO2 = document.getElementById('co2Chart').getContext('2d');
-        var co2Data = {
-            labels: ['Produktion', 'Transport', 'Gesamt'],
-            datasets: [{
-                label: 'CO₂ Einsparungen (kg)',
-                data: [
-                    {{ re_data.co2_savings_production | default(0) | round(2) }},
-                    {{ emissions_data.gesamt_einsparung_kg | round(2) }},
-                    {{ re_data.co2_savings_production | default(0) | round(2) + emissions_data.gesamt_einsparung_kg | round(2) }}
-                ],
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.7)',
-                    'rgba(75, 192, 192, 0.7)',
-                    'rgba(153, 102, 255, 0.7)'
-                ],
-                borderColor: [
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)'
-                ],
-                borderWidth: 1
-            }]
-        };
+    // ------------------------------------------------------------------
+    // Diagramme
+    //
+    // Eine Kennzahl (kg CO2) ueber mehrere Kategorien: Balken auf einer
+    // gemeinsamen Achse. Nur eine Messreihe, deshalb eine einzige Farbe -
+    // die Farbe kodiert hier nichts und braucht keine Legende. Werte stehen
+    // direkt am Balken, das Raster bleibt zurueckhaltend.
+    // ------------------------------------------------------------------
+    const AKZENT = '#225f78';
+    const TEXT_INK = '#1a1a1a';
+    const TEXT_MUTED = '#6b6b6b';
+    const RASTER = '#eeeeee';
 
-        new Chart(ctxCO2, {
-            type: 'doughnut',
-            data: co2Data,
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    title: {
-                        display: true,
-                        text: 'CO₂-Einsparungen nach Quelle'
-                    }
+    // Werte an den Balkenenden - so entfaellt das Ablesen an der Achse.
+    const wertLabels = {
+        id: 'wertLabels',
+        afterDatasetsDraw(chart) {
+            const {ctx} = chart;
+            ctx.save();
+            ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            ctx.fillStyle = TEXT_INK;
+            ctx.textBaseline = 'middle';
+            chart.getDatasetMeta(0).data.forEach((balken, i) => {
+                const wert = chart.data.datasets[0].data[i];
+                if (wert === null || wert === undefined) return;
+                const text = new Intl.NumberFormat('de-DE', {maximumFractionDigits: 0}).format(wert) + ' kg';
+                ctx.textAlign = 'left';
+                ctx.fillText(text, balken.x + 8, balken.y);
+            });
+            ctx.restore();
+        }
+    };
+
+    const balkenOptionen = (achsenTitel) => ({
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {padding: {right: 72}},
+        plugins: {
+            // Eine Messreihe: der Titel benennt sie, eine Legende waere Ballast.
+            legend: {display: false},
+            tooltip: {
+                backgroundColor: '#111111',
+                padding: 10,
+                displayColors: false,
+                callbacks: {
+                    label: (c) => new Intl.NumberFormat('de-DE',
+                        {maximumFractionDigits: 1}).format(c.parsed.x) + ' kg CO₂'
                 }
             }
+        },
+        scales: {
+            x: {
+                title: {display: true, text: achsenTitel, color: TEXT_MUTED,
+                        font: {size: 11}},
+                grid: {color: RASTER, drawBorder: false},
+                ticks: {color: TEXT_MUTED, font: {size: 11}}
+            },
+            y: {
+                grid: {display: false, drawBorder: false},
+                ticks: {color: TEXT_INK, font: {size: 12, weight: '600'}}
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const produktion = {{ '%.1f'|format(re_data.co2_savings_production|default(0)) }};
+        const transport  = {{ '%.1f'|format(emissions_data.gesamt_einsparung_kg|default(0)) }};
+
+        new Chart(document.getElementById('co2Chart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Produktion', 'Transport'],
+                datasets: [{
+                    data: [produktion, transport],
+                    backgroundColor: AKZENT,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                    barThickness: 28
+                }]
+            },
+            options: balkenOptionen('vermiedene Emissionen in kg CO₂'),
+            plugins: [wertLabels]
         });
 
-        // Transportemissions Chart
-        var ctxTransport = document.getElementById('transportChart').getContext('2d');
-        var transportData = {
-            labels: ['LKW', 'PKW', 'Schiff', 'Flugzeug'],
-            datasets: [
-                {
-                    label: 'CO₂-Emissionen (kg)',
-                    data: [
-                        {{ emissions_data.transportmittel.lkw.emissionen_kg | round(2) }},
-                        {{ emissions_data.transportmittel.pkw.emissionen_kg | round(2) }},
-                        {{ emissions_data.transportmittel.schiff.emissionen_kg | round(2) }},
-                        {{ emissions_data.transportmittel.flugzeug.emissionen_kg | round(2) }}
-                    ],
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'CO₂-Einsparungen (kg)',
-                    data: [
-                        {{ emissions_data.transportmittel.lkw.einsparung_kg | round(2) }},
-                        {{ emissions_data.transportmittel.pkw.einsparung_kg | round(2) }},
-                        {{ emissions_data.transportmittel.schiff.einsparung_kg | round(2) }},
-                        {{ emissions_data.transportmittel.flugzeug.einsparung_kg | round(2) }}
-                    ],
-                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
-                }
-            ]
+        const tm = {
+            LKW:      {{ '%.1f'|format(emissions_data.transportmittel.lkw.einsparung_kg|default(0)) }},
+            PKW:      {{ '%.1f'|format(emissions_data.transportmittel.pkw.einsparung_kg|default(0)) }},
+            Schiff:   {{ '%.1f'|format(emissions_data.transportmittel.schiff.einsparung_kg|default(0)) }},
+            Flugzeug: {{ '%.1f'|format(emissions_data.transportmittel.flugzeug.einsparung_kg|default(0)) }}
         };
+        const strecke = {
+            LKW:      {{ '%.0f'|format(emissions_data.transportmittel.lkw.distanz_km|default(0)) }},
+            PKW:      {{ '%.0f'|format(emissions_data.transportmittel.pkw.distanz_km|default(0)) }},
+            Schiff:   {{ '%.0f'|format(emissions_data.transportmittel.schiff.distanz_km|default(0)) }},
+            Flugzeug: {{ '%.0f'|format(emissions_data.transportmittel.flugzeug.distanz_km|default(0)) }}
+        };
+        // Absteigend sortiert: der Vergleich ist die Aussage.
+        const namen = Object.keys(tm).sort((a, b) => tm[b] - tm[a]);
 
-        new Chart(ctxTransport, {
+        new Chart(document.getElementById('transportChart').getContext('2d'), {
             type: 'bar',
-            data: transportData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'CO₂ (kg)'
-                        }
-                    }
-                },
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'CO₂-Emissionen und Einsparungen nach Transportmittel',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    legend: {
-                        position: 'top',
-                    }
-                }
-            }
+            data: {
+                labels: namen.map(n => `${n} · ${new Intl.NumberFormat('de-DE').format(strecke[n])} km`),
+                datasets: [{
+                    data: namen.map(n => tm[n]),
+                    backgroundColor: AKZENT,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                    barThickness: 24
+                }]
+            },
+            options: balkenOptionen('vermiedene Emissionen in kg CO₂'),
+            plugins: [wertLabels]
         });
     });
 </script>

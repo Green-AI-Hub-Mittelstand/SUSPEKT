@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}🌍 System 180 – Verwaltung {% endblock %}
+{% block title %}System 180 – Verwaltung{% endblock %}
 
 {% block content %}
 <div class="color-management-container">
@@ -37,10 +37,10 @@
                             <tbody>
                                 {% for name, color in colors.items() %}
                                 <tr>
-                                    <td class="color-name">{{ name }}</td>
-                                    <td class="color-hex">{{ color.hex_code }}</td>
-                                    <td class="color-ncs">{{ color.ncs_code }}</td>
-                                    <td class="color-sample">
+                                    <td class="color-name" data-spalte="Name">{{ name }}</td>
+                                    <td class="color-hex" data-spalte="Hex-Code">{{ color.hex_code }}</td>
+                                    <td class="color-ncs" data-spalte="NCS-Code">{{ color.ncs_code }}</td>
+                                    <td class="color-sample" data-spalte="Farbmuster">
                                         <div class="color-preview" style="background-color: {{ color.hex_code }}"></div>
                                     </td>
                                 </tr>
@@ -104,7 +104,7 @@
         max-width: 1400px;
         margin: 0 auto;
         padding: 1.5rem;
-        color: #333;
+        color: var(--c-text);
     }
 
     /* Header-Bereich */
@@ -114,7 +114,7 @@
 
     .page-title {
         font-size: 1.8rem;
-        color: #2196F3;
+        color: var(--c-black);
         margin-bottom: 0.5rem;
         display: flex;
         align-items: center;
@@ -123,7 +123,7 @@
 
     .page-description {
         font-size: 1rem;
-        color: #666;
+        color: var(--c-gray-600);
         margin: 0;
     }
 
@@ -142,16 +142,16 @@
 
     /* Card-Komponente */
     .card {
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        background-color: var(--c-white);
+        border-radius: 4px;
+        box-shadow: var(--shadow-sm);
         overflow: hidden;
     }
 
     .card-header {
         padding: 1.2rem 1.5rem;
-        background: linear-gradient(135deg, #2196F3, #1565C0);
-        color: white;
+        background: var(--c-black);
+        color: var(--c-white);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -192,23 +192,23 @@
     .color-table td {
         padding: 0.75rem 1rem;
         text-align: left;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid var(--c-gray-100);
     }
 
     .color-table th {
         font-weight: 600;
-        color: #333;
-        border-bottom: 2px solid #ddd;
+        color: var(--c-text);
+        border-bottom: 2px solid var(--c-gray-300);
     }
 
     .color-table tr:hover {
-        background-color: #f9f9f9;
+        background-color: var(--c-gray-50);
     }
 
     .color-preview {
         width: 40px;
         height: 24px;
-        border-radius: 4px;
+        border-radius: 2px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         border: 1px solid rgba(0,0,0,0.1);
     }
@@ -228,20 +228,21 @@
 
     .form-group label {
         font-weight: 500;
-        color: #444;
+        color: var(--c-gray-700);
     }
 
     .form-group input[type="text"] {
+        width: 100%;
         padding: 0.8rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        border: 1px solid var(--c-gray-300);
+        border-radius: 2px;
         font-size: 0.95rem;
     }
 
     .form-group input[type="text"]:focus {
-        border-color: #2196F3;
+        border-color: var(--c-black);
         outline: none;
-        box-shadow: 0 0 0 3px rgba(33,150,243,0.2);
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.15);
     }
 
     .color-input-container {
@@ -254,22 +255,22 @@
         width: 50px;
         height: 40px;
         border: none;
-        border-radius: 4px;
+        border-radius: 2px;
         cursor: pointer;
     }
 
     #hex_code_text {
         font-family: monospace;
         font-size: 1rem;
-        background-color: #f5f5f5;
+        background-color: var(--c-gray-50);
         padding: 0.5rem;
-        border-radius: 4px;
+        border-radius: 2px;
         min-width: 70px;
     }
 
     .hint-text {
         font-size: 0.8rem;
-        color: #666;
+        color: var(--c-gray-600);
         margin-top: 0.2rem;
     }
 
@@ -283,10 +284,10 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.8rem 1.5rem;
-        background-color: #4CAF50;
-        color: white;
+        background-color: var(--c-black);
+        color: var(--c-white);
         border: none;
-        border-radius: 4px;
+        border-radius: 2px;
         font-size: 1rem;
         font-weight: 500;
         cursor: pointer;
@@ -294,7 +295,7 @@
     }
 
     .submit-button:hover {
-        background-color: #388E3C;
+        background-color: var(--c-gray-900);
         box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
@@ -314,7 +315,7 @@
         color: #388E3C;
         background-color: #e8f5e9;
         padding: 1rem;
-        border-radius: 4px;
+        border-radius: 2px;
         border-left: 4px solid #4CAF50;
     }
 
@@ -322,8 +323,70 @@
         color: #d32f2f;
         background-color: #ffebee;
         padding: 1rem;
-        border-radius: 4px;
-        border-left: it solid #f44336;
+        border-radius: 2px;
+        border-left: 4px solid #f44336;
+    }
+
+    /* Vier Spalten brauchen rund 413px - auf einem Handy sind nach allen
+       Polsterungen etwa 280px übrig. Statt seitlich zu scrollen wird jede
+       Zeile zu einem kleinen Block mit Beschriftung. */
+    @media (max-width: 600px) {
+        .color-table thead { display: none; }
+
+        .color-table,
+        .color-table tbody,
+        .color-table tr,
+        .color-table td { display: block; width: 100%; }
+
+        .color-table tr {
+            border: 1px solid var(--c-border);
+            border-radius: 2px;
+            margin-bottom: 0.75rem;
+            padding: 0.25rem 0;
+        }
+
+        .color-table td {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.5rem 0.9rem;
+            border-bottom: none;
+        }
+
+        .color-table td::before {
+            content: attr(data-spalte);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--c-gray-500);
+        }
+
+        .color-table tr:hover { background-color: transparent; }
+    }
+
+    @media (max-width: 480px) {
+        .color-management-container {
+            padding: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+        }
+
+        .card-header {
+            padding: 1rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .submit-button {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 
