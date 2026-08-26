@@ -6,6 +6,33 @@ The backend uses AI models to classify furniture types and detect component cond
 
 ![System Overview](docs/images/Architektur.png)
 
+## Pages
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Upload or capture images and run detection |
+| `/review_results` → `/confirm_results` | Check the bill of materials, then write the order to Neo4j — its parts stay **pending** and are not yet in the inventory |
+| `/freigabe` | Release pending orders into the digital inventory: correct or remove single parts, release or discard the order. Below that, a collapsible, searchable archive of **all** orders for later corrections or deletion (staff only) |
+| `/inventory` | Digital inventory of released components |
+| `/resource` | Material reuse, CO₂ savings, transport emissions, order map |
+| `/video` | Detection on uploaded MP4/MOV files |
+| `/training` | Label Studio setup, pre-labeling, YOLO dataset export, upload/activation of model versions |
+| `/decordetection/manage_colors` | Décor and coating palette (`colors.json`, `beschichtung.json`) |
+| `/login` | Staff login — `/freigabe`, `/training` and the admin actions require it |
+
+## Configuration
+
+Credentials come from `.env` in this folder (template: `.env.example`):
+
+| Variable | Purpose |
+| --- | --- |
+| `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Knowledge graph connection |
+| `HERE_API_KEY` | Geocoding of order addresses and transport distances |
+
+Under docker compose the three `NEO4J_*` values are overridden and point at the
+bundled local Neo4j service, so the stack never depends on an external Aura
+instance.
+
 ## Usage
 
 To start the web app with **Uvicorn**, run:
@@ -27,14 +54,41 @@ python -m webapp.model
 Start with:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-You can access the webapp at [http://localhost:8000](http://localhost:8000).
-Label Studio (labeling backend for the retraining pipeline) is started
-alongside and available at [http://localhost:8082](http://localhost:8082) —
-its data lives in `./labelstudio-data`, synced capture images are read from
-`./training_captures`.
+| Service | Port | Notes |
+| --- | --- | --- |
+| `webapp` | 8000 | FastAPI app (Uvicorn) |
+| `neo4j` | 7474 (browser), 7687 (bolt) | Neo4j 5 Community, data in `./neo4j-data` |
+| `labelstudio` | 8082 | Labeling backend for the retraining loop, data in `./labelstudio-data`, synced captures read from `./training_captures` |
+| `nginx` | 80, 443 | TLS termination and gzip — only started with `--profile production` |
+
+Persisted outside the containers, so a rebuild keeps them: `./neo4j-data`
+(graph), `./config` (Label Studio token, model registry), `./model` (uploaded
+model versions), `./labelstudio-data`, `./training_captures`.
+
+**After code changes:** application code, templates and static files are copied
+into the image at build time, so a plain restart keeps serving the old version:
+
+```bash
+docker compose up -d --build webapp
+```
+
+`nginx.conf` on the other hand is bind-mounted — changes there only need a
+reload of the running container:
+
+```bash
+docker exec webapp-nginx-1 nginx -s reload
+```
+
+For the public deployment (TLS certificates from `/etc/letsencrypt`):
+
+```bash
+docker compose --profile production up -d
+```
+
+See `docs/deployment.md` for the full server playbook.
 
 ### Docker (manually)
 

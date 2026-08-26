@@ -18,27 +18,31 @@ Digital Product Passports for System180’s modular furniture ecosystem, develop
 - **Collection-based DPPs:** Components move between digital collections instead of carrying QR/RFID tags, ensuring ESPR-ready traceability for ID-free stainless-steel tubes, panels, doors, and fasteners.
 - **Dual Experience:** A browser workflow for batch uploads plus a mobile Jetson Orin Nano demonstrator with two OAK-1 Max (nub orientation) and one OBSBOT 4K camera (defect detection + ArUco measurement).
 - **Automatic Enrichment:** Each detection inherits class templates (`class_properties.py`), calculated lengths/weights, décor or coating codes (`colors.json`, `beschichtung.json`), and reuse flags derived from condition recognition.
+- **Two-Step Release:** Captured parts enter the graph as *pending* (`confirmed = false`) and stay out of the digital inventory until a System180 employee checks them on `/freigabe` — correcting class, system dimensions, décor, condition and reuse flag per part, or dropping false detections. The same page carries a collapsible, searchable archive of every order captured so far, so a released order can still be corrected or deleted afterwards.
 - **Circular Analytics:** The `resource_efficiency` and `transport_emission` modules quantify material savings, CO₂ avoidance, and logistics emissions per order and per transport mode.
 
 ## Architecture Overview
 1. **Acquisition:** Images or video streams enter `/detect` or `/video`, optionally tagged with view metadata (front/side/top) and capture type (single vs. multi-angle).
 2. **Inference & Enrichment:** `processImage.py` ensembles YOLO outputs, generates crops, measures geometry, infers décor/coating, and triggers condition checks (manual overrides or `/api/detect_condition` CNN).
 3. **Review:** Results are cached for interactive editing in `templates/results.html`, then confirmed via `/review_results` and `/confirm_results`, which geo-code orders (HERE API) before writing to Neo4j.
-4. **Knowledge Graph:** `neo4jIntegration.py` stores each component as a dedicated node with bounding boxes, materials, reuse flag, and order metadata; collections can be queried for DPP generation.
-5. **Dashboards:** `/inventory` and `/resource` render System180-branded UIs for inventory status, reusable stock, transport footprints, and order geographies (Leaflet + Chart.js).
+4. **Knowledge Graph:** `neo4jIntegration.py` stores each component as a dedicated node with bounding boxes, materials, reuse flag, and order metadata; collections can be queried for DPP generation. Components are written as pending, so nothing reaches the inventory unchecked.
+5. **Release:** `/freigabe` (`approval_routes.py`) lists the pending orders for a final review — every part can be corrected or removed, releasing the order sets `confirmed = true` plus a timestamp and moves its parts into the digital inventory. Below that, an archive of all orders (collapsible per order, searchable) supports later corrections and deletions.
+6. **Dashboards:** `/inventory` and `/resource` render System180-branded UIs for inventory status, reusable stock, transport footprints, and order geographies (Leaflet + Chart.js).
 
 ## Component Map
 | Area | Description | Key Files |
 | --- | --- | --- |
 | Detection pipeline | Uploads, YOLO ensemble, color/beschichtung inference, measurement, caching | `webapp/model.py`, `webapp/processImage.py`, `webapp/measurement.py` |
-| Condition handling | CNN inference + manual overrides for OK / MDF-Platzer / Rohr_Kratzer / Delle | `webapp/conditionDetection.py`, `templates/results.html` |
+| Condition handling | CNN inference + manual overrides for OK / MDF-Platzer / Rohr_Kratzer / Delle, plus anomaly triage (PatchCore-light on good parts only) and the optional damage model | `webapp/conditionDetection.py`, `webapp/damageDetection.py`, `templates/results.html` |
+| Bill of materials | Part counts derived from the system grid across several views instead of summing detections per image (avoids double counting) | `webapp/bill_of_materials.py` |
+| Order release | Review of pending orders, per-part correction, archive of all orders for later edits or deletion | `webapp/approval_routes.py`, `templates/approval.html` |
 | Data persistence | SQLite users + Neo4j component/order graph with Collection relationships | `webapp/user_db_models.py`, `webapp/neo4jIntegration.py`, `webapp/neo4j_database.py` |
 | Resource dashboards | Material reuse, CO₂ analytics, HERE-powered transport distances, Leaflet map | `webapp/resource_efficiency.py`, `webapp/transport_emission.py`, `templates/resource_efficiency.html` |
-| Video + training | Streaming YOLO detections for MP4/MOV uploads, Label Studio → YOLO retraining | `webapp/videoDetection.py`, `webapp/modelTraining.py`, `webapp/trainingDataCollector.py` |
-| Edge demonstrator | Jetson-based triple-camera setup with TensorRT engines and ArUco measuring | `demonstrator/` (see `main.py`, scripts, docs) |
+| Video + training | Streaming YOLO detections for MP4/MOV uploads, Label Studio setup/pre-labeling/export, versioned model uploads with activation and rollback | `webapp/videoDetection.py`, `webapp/modelTraining.py`, `webapp/trainingDataCollector.py`, `webapp/labelStudioAdmin.py`, `webapp/modelRegistry.py` |
+| Edge demonstrator | Jetson-based triple-camera setup with TensorRT engines and ArUco measuring | maintained outside this repository (see the Edge Demonstrator section) |
 
 ## Models & Data Highlights
-- **YOLOv11 (Ultralytics):** `model/system180custommodel_v1.pt` (real-photo training) + `model/best_synthetic_v2.pt`; fused via `combineYOLOModels.py` with IoU-based NMS.
+- **YOLOv11 (Ultralytics):** `model/system180custommodel_v1.pt` (real-photo training) + `model/best_synthetic_v2.pt`; fused via `combineYOLOModels.py` with IoU-based NMS. The live version per task (komponenten / nubs / schaeden) is not hard-coded but taken from the registry in `config/models.json`, fed by the uploads on the `/training` page.
 - **Nub orientation:** `model/NubsUpDown.pt` deployed on OAK-1 Max cameras for on-device segmentation.
 - **Surface condition CNN:** `model/faultDetection.pt` (custom conv net, `ZustandModel`) fed by 300×300 crops and class-aware sanity checks.
 - **Color/Beschichtung libraries:** JSON palettes with HEX + NCS codes; K-Means clustering promotes dominant décor shades while safeguarding whites and powder coats.
@@ -57,6 +61,8 @@ Digital Product Passports for System180’s modular furniture ecosystem, develop
 ## Documentation Map
 - `docs/retraining/konzept.md` — continual-learning concept: capture → Label Studio pre-labeling → Colab fine-tuning → deployment, incl. tool comparison (Label Studio vs. Roboflow vs. CVAT).
 - `docs/retraining/schulung.md` — full training-day curriculum for handing the retraining loop over to System 180.
+- `docs/retraining/schaeden.md` — damage recognition: anomaly triage on good parts vs. a trained damage model, and how to build up both.
+- `webapp/docs/deployment.md` — server deployment playbook (compose stack, TLS, Label Studio, model volumes).
 - `notebooks/SUSPEKT_YOLO_Weitertraining_Colab.ipynb` — ready-to-run Google Colab notebook for fine-tuning the YOLO models on Google GPUs (exports versioned `.pt` + `.onnx`).
 - `training/` — pipeline scripts: Label Studio label-config generation, YOLO pre-labeling (predictions API), and YOLO dataset export with stable class indices.
 - `docs/system180_project_reference.md` — deep dive into partners, use cases, data flow, modules, models, demonstrator mechanics, and deployment playbooks.
