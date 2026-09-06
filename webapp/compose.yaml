@@ -13,11 +13,16 @@ services:
       - LABEL_STUDIO_API_URL=http://labelstudio:8080/api/projects/{id}/export?exportType=JSON
       - LABEL_STUDIO_BASE_URL=https://dfki-3129.dfki.de/labelstudio
       - LABEL_STUDIO_MEDIA_DIR=/label-studio-media/upload
-      # Default (fallback) model for detection/prelabeling/export. The active
-      # version is set on the /training page (drag & drop upload) and stored in
-      # config/models.json — this value is only used until a version is
-      # activated there.
-      - MODEL_NAME=system180custommodel_v1.pt
+      # Default (fallback) model for detection/prelabeling/export. Comes from
+      # MODEL_NAME in .env (the value after ":-" is only the last resort if
+      # .env does not set it). The active version is set on the /training page
+      # (drag & drop upload) and stored in config/models.json — this value is
+      # only used until a version is activated there.
+      - MODEL_NAME=${MODEL_NAME:-system180custommodel_v1.pt}
+      # Same principle for the other two model kinds, so .env stays the single
+      # place where the fallback models are configured.
+      - NUBS_MODEL_NAME=${NUBS_MODEL_NAME:-NubsUpDown.pt}
+      - SCHADEN_MODEL_NAME=${SCHADEN_MODEL_NAME:-schaeden.pt}
       # Local Neo4j (see the neo4j service below) instead of Aura; overrides
       # NEO4J_URI/USER/PASSWORD from .env so compose always talks to it.
       - NEO4J_URI=bolt://neo4j:7687
